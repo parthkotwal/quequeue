@@ -2,6 +2,8 @@ from flask import request, redirect, session, url_for, Blueprint
 import config
 import urllib.parse
 import requests
+import json
+from datetime import datetime
 
 def init_routes(app):
 
@@ -48,32 +50,97 @@ def init_routes(app):
 
         return "Login successful! You can now access Spotify data!"
     
-@app.route("/queue")
-def get_queue():
-    access_token = session.get("access_token")
-    if not access_token:
+    @app.route("/logout")
+    def logout():
+        session.clear()
         return redirect(url_for("login"))
-    
-    url = "https://api.spotify.com/v1/me/player/queue"
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        return f"Error: {response.status_code} - {response.text}"
-    
-    queue_data = response.json()
-    
-    # Currently Playing
-    output = []
-    now = queue_data.get("currently_playing")
-    if now:
-        song = now.get("name")
-        artist = now.get("artists", [{}])[0].get("name")
-        output.append(f"Currently Playing: “{song}” by {artist}")
-    else:
-        output.append("No song currently playing.")
 
-    # Queue
+    @app.route("/queue")
+    def get_queue():
+        access_token = session.get("access_token")
+        if not access_token:
+            return redirect(url_for("login"))
+        
+        url = "https://api.spotify.com/v1/me/player/queue"
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            return f"Error: {response.status_code} - {response.text}"
+        
+        queue_data = response.json()
+        return queue_data
+        # Currently Playing
+        # output = []
+        # now = queue_data.get("currently_playing")
+        # if now:
+        #     song = now.get("name")
+        #     artist = now.get("artists", [{}])[0].get("name")
+        #     output.append(f"Currently Playing: “{song}” by {artist}")
+        # else:
+        #     output.append("No song currently playing.")
 
-    
+        # # Queue
+        # queue = queue_data.get("queue", [])
+        # if queue:
+        #     output.append("\nUp Next:")
+        #     for i, track in enumerate(queue, start=1):
+        #         name = track.get("name")
+        #         artist = track.get("artists", [{}])[0].get("name")
+        #         output.append(f"{i}. “{name}” by {artist}")
+
+        # else:
+        #     output.append("No queue present.")
+
+        # # filepath = f".json"
+        # # with open() as file
+        
+        # return "\n".join(output)
+
+    @app.route("/export_queue")
+    def export_queue():
+        access_token = session.get("access_token")
+        if not access_token:
+            return redirect(url_for("login"))
+        
+        url = "https://api.spotify.com/v1/me/player/queue"
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        response = requests.get(url, headers=headers)
+        if response.status_code != 200:
+            return f"Error: {response.status_code} - {response.text}"
+        
+        queue_data = response.json()
+
+        output = {}
+        # Currently Playing
+        currently_playing = queue_data.get("currently_playing")
+        if currently_playing:
+            output['currently_playing'] = {
+                "id": currently_playing.get("id"),
+                "name": currently_playing.get("name"),
+                "artists": [artist["name"] for artist in currently_playing.get("artists", [])],
+                "images": currently_playing.get("album")["images"][0]
+            }
+        
+        queue = queue_data.get("queue", [])
+        if queue:
+            output['queue'] = []
+            for track in queue:
+                output["queue"].append(
+                    {
+                        "id": track.get("id"),
+                        "name": track.get("name"),
+                        "artists": [artist["name"] for artist in track.get("artists", [])],
+                        "images": track.get("album")["images"][0]
+                    }
+                )
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"exports/queue_{timestamp}.json"
+        with open(filename, "w") as f:
+            json.dump(output, f, indent=2)
+
+        return f"Queue exported successfully to {filename}"

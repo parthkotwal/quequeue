@@ -1,0 +1,274 @@
+{
+  "currently_playing": {
+    "id": "2yUzr8Sr6ldG8vmHhZwTnz",
+    "name": "n\u00e9e-nah",
+    "artists": [
+      "21 Savage",
+      "Travis Scott",
+      "Metro Boomin"
+    ],
+    "images": {
+      "height": 640,
+      "url": "https://i.scdn.co/image/ab67616d0000b273bbdceba2bf1867d4966d0347",
+      "width": 640
+    }
+  },
+  "queue": [
+    {
+      "id": "6NMtzpDQBTOfJwMzgMX0zl",
+      "name": "SKELETONS",
+      "artists": [
+        "Travis Scott"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b273072e9faef2ef7b6db63834a3",
+        "width": 640
+      }
+    },
+    {
+      "id": "5SIvP6TdWc9DNvKbENjnYc",
+      "name": "PHILLY (with Travis Scott)",
+      "artists": [
+        "Playboi Carti",
+        "Travis Scott"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b2736b219c8d8462bfe254a20469",
+        "width": 640
+      }
+    },
+    {
+      "id": "6pcywuOeGGWeOQzdUyti6k",
+      "name": "Glock In My Lap",
+      "artists": [
+        "21 Savage",
+        "Metro Boomin"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b273aa57907bf0cb2ca0c8cc74bc",
+        "width": 640
+      }
+    },
+    {
+      "id": "6PGoSes0D9eUDeeAafB2As",
+      "name": "LOVE. FEAT. ZACARI.",
+      "artists": [
+        "Kendrick Lamar",
+        "Zacari"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b2738b52c6b9bc4e43d873869699",
+        "width": 640
+      }
+    },
+    {
+      "id": "4Pwjz3DfvfQWV0rO2V8jyh",
+      "name": "Bitch, Don\u2019t Kill My Vibe",
+      "artists": [
+        "Kendrick Lamar"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b273d28d2ebdedb220e479743797",
+        "width": 640
+      }
+    },
+    {
+      "id": "6AtscuPpNRwDvuehpFtWw1",
+      "name": "r - Cali",
+      "artists": [
+        "A$AP Rocky"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b273707fe4c159f0384c613dc4d2",
+        "width": 640
+      }
+    },
+    {
+      "id": "4txKMpsSfZRV6durPuHVq0",
+      "name": "New Tank",
+      "artists": [
+        "Playboi Carti"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b27398ea0e689c91f8fea726d9bb",
+        "width": 640
+      }
+    },
+    {
+      "id": "37Nqx7iavZpotJSDXZWbJ3",
+      "name": "Girls Want Girls (with Lil Baby)",
+      "artists": [
+        "Drake",
+        "Lil Baby"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b273cd945b4e3de57edd28481a3f",
+        "width": 640
+      }
+    },
+    {
+      "id": "1qMMYpVatbRITKCfq1gasi",
+      "name": "PUFFIN ON ZOOTIEZ",
+      "artists": [
+        "Future"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b27386badd635b69aea887862214",
+        "width": 640
+      }
+    },
+    {
+      "id": "7sO5G9EABYOXQKNPNiE9NR",
+      "name": "Ric Flair Drip (with Metro Boomin)",
+      "artists": [
+        "Offset",
+        "Metro Boomin"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b2730db43130a9aaa7bae56967ed",
+        "width": 640
+      }
+    },
+    {
+      "id": "49zD0wr2S3d0lZPib0K4e1",
+      "name": "Fuck Up Some Commas",
+      "artists": [
+        "Future"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b273b2592bea12d840fd096ef965",
+        "width": 640
+      }
+    },
+    {
+      "id": "2Hh3ETdQKrmSI3QS0hme7g",
+      "name": "Too Many Nights (feat. Don Toliver & with Future)",
+      "artists": [
+        "Metro Boomin",
+        "Future",
+        "Don Toliver"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b273c4fee55d7b51479627c31f89",
+        "width": 640
+      }
+    },
+    {
+      "id": "2gAGWaK4wvt2xrFUlR4mK8",
+      "name": "Jukebox Joints (feat. Joe Fox & Kanye West)",
+      "artists": [
+        "A$AP Rocky",
+        "Joe Fox",
+        "Kanye West"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b27381a6a2cafab2e7a4066b5eec",
+        "width": 640
+      }
+    },
+    {
+      "id": "7vgTNTaEz3CsBZ1N4YQalM",
+      "name": "Ghost Town",
+      "artists": [
+        "Kanye West",
+        "PARTYNEXTDOOR"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b2730cd942c1a864afa4e92d04f2",
+        "width": 640
+      }
+    },
+    {
+      "id": "4jVBIpuOiMj1crqd8LoCrJ",
+      "name": "FRANCHISE (feat. Young Thug & M.I.A.)",
+      "artists": [
+        "Travis Scott",
+        "Young Thug",
+        "M.I.A."
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b27370f2ab5608885749f7210b5f",
+        "width": 640
+      }
+    },
+    {
+      "id": "46fk9wjYcPm0sgym2b7EEE",
+      "name": "We Major",
+      "artists": [
+        "Kanye West",
+        "Nas",
+        "Really Doe"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b273428d2255141c2119409a31b2",
+        "width": 640
+      }
+    },
+    {
+      "id": "7lAK3oHbfEnvUQWosrMMpR",
+      "name": "YOSEMITE",
+      "artists": [
+        "Travis Scott"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b273072e9faef2ef7b6db63834a3",
+        "width": 640
+      }
+    },
+    {
+      "id": "7rbECVPkY5UODxoOUVKZnA",
+      "name": "I Wonder",
+      "artists": [
+        "Kanye West"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b27326f7f19c7f0381e56156c94a",
+        "width": 640
+      }
+    },
+    {
+      "id": "3F5CgOj3wFlRv51JsHbxhe",
+      "name": "Jimmy Cooks (feat. 21 Savage)",
+      "artists": [
+        "Drake",
+        "21 Savage"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b2738dc0d801766a5aa6a33cbe37",
+        "width": 640
+      }
+    },
+    {
+      "id": "0bkV1iQHSxBaksUqgEkcbc",
+      "name": "SKITZO (feat. Young Thug)",
+      "artists": [
+        "Travis Scott",
+        "Young Thug"
+      ],
+      "images": {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b273881d8d8378cd01099babcd44",
+        "width": 640
+      }
+    }
+  ]
+}
