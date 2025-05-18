@@ -1,3 +1,120 @@
 from django.shortcuts import render
+import requests
+import urllib.parse
+import json
+from django.http import JsonResponse, HttpResponseRedirect
+from django.conf import settings
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import now
+from .models import User, Queue, Track
 
-# Create your views here.
+SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
+SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
+SPOTIFY_ME_URL = "https://api.spotify.com/v1/me"
+SCOPE = "user-read-playback-state user-read-currently-playing"
+
+def login(request):
+    params = {
+        "client_id": settings.SPOTIFY_CLIENT_ID,
+        "response_type": "code",
+        "redirect_uri": settings.SPOTIFY_REDIRECT_URI,
+        "scope": SCOPE,
+    }
+    full_auth_url = f"{SPOTIFY_AUTH_URL}?{urllib.parse.urlencode(params)}"
+    return HttpResponseRedirect(full_auth_url)
+
+@csrf_exempt
+def callback(request):
+    code = request.GET.get("code")
+    if not code:
+        return JsonResponse({"error": "No code provided"}, status=400)
+    
+    data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": settings.SPOTIFY_REDIRECT_URI,
+        "client_id": settings.SPOTIFY_CLIENT_ID,
+        "client_secret": settings.SPOTIFY_CLIENT_SECRET,
+    }
+
+    response = requests.post(SPOTIFY_TOKEN_URL, data=data)
+    if response.status_code != 200:
+        return JsonResponse({"error": "Token exchange failed"}, status=400)
+    
+    token_data = response.json()
+    access_token = token_data.get("access_token")
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+    user_resp = requests.get(SPOTIFY_ME_URL, headers=headers)
+    user_data = user_resp.json()
+
+    spotify_id = user_data.get("id")
+    display_name = user_data.get("display_name", "")
+
+    user, created = User.objects.update_or_create(
+        spotify_id=spotify_id,
+        defaults={
+            "display_name": display_name,
+            "access_token": access_token,
+        },
+    )
+
+    request.session["user_id"] = user.id
+    return JsonResponse({"message": "Login successful", "user": display_name})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def export_queue(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not logged in"}, status=401)
+    
+    body = json.loads(request.body)
+    queue_name = body.get("name")
+    image_url = body.get("image_url")
+
+    if not queue_name or not image_url:
+        return JsonResponse({"error": "Missing name or image_url"}, status=400)
+
+
+    user = User.objects.get(id=user_id)
+    headers = {"Authorization": f"Bearer {user.access_token}"}
+    response = requests.get(SPOTIFY_ME_URL+"/player/queue", headers=headers)
+    if response.status_code != 200:
+        return JsonResponse({"error": "Failed to fetch queue"}, status=500)
+    
+    queue_data = response.json()
+    new_queue = Queue.objects.create(
+        user=user,
+        name=queue_name,
+        image_url=image_url
+    )
+
+    def extract_track(track_json):
+        return {
+            "track_name": track_json.get("name"),
+            "track_uri": track_json.get("uri"),
+            "artist_name": track_json.get("artists", [{}])[0].get("name"),
+            "album_image_url": track_json.get("album", {}).get("images", [{}])[0].get("url"),
+        }
+    
+    tracks = []
+    position = 0
+    now_playing = queue_data.get("currently_playing")
+    if now_playing:
+        tracks.append(extract_track(now_playing))
+
+    for track in queue_data.get("queue", []):
+        data = extract_track(track)
+        tracks.append(data)
+    
+    for idx, track in enumerate(tracks):
+        Track.objects.create(
+            queue = new_queue, 
+            position = idx,
+            **track
+        )
+
+    return JsonResponse({"message": "Queue saved successfully", "queue_id": new_queue.id})
