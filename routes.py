@@ -4,6 +4,8 @@ import urllib.parse
 import requests
 import json
 from datetime import datetime
+import os
+import time
 
 def init_routes(app):
 
@@ -117,16 +119,17 @@ def init_routes(app):
         output = {}
         # Currently Playing
         currently_playing = queue_data.get("currently_playing")
-        if currently_playing:
+        queue = queue_data.get("queue", [])
+
+        if currently_playing and queue:
             output['currently_playing'] = {
                 "id": currently_playing.get("id"),
                 "name": currently_playing.get("name"),
                 "artists": [artist["name"] for artist in currently_playing.get("artists", [])],
-                "images": currently_playing.get("album")["images"][0]
+                "images": currently_playing.get("album")["images"][0],
+                "uri": currently_playing.get("uri")
             }
         
-        queue = queue_data.get("queue", [])
-        if queue:
             output['queue'] = []
             for track in queue:
                 output["queue"].append(
@@ -134,9 +137,13 @@ def init_routes(app):
                         "id": track.get("id"),
                         "name": track.get("name"),
                         "artists": [artist["name"] for artist in track.get("artists", [])],
-                        "images": track.get("album")["images"][0]
+                        "images": track.get("album")["images"][0],
+                        "uri": track.get("uri")
                     }
                 )
+        
+        else:
+            return "Need to have song playing"
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"exports/queue_{timestamp}.json"
@@ -145,5 +152,39 @@ def init_routes(app):
 
         return f"Queue exported successfully to {filename}"
     
+    @app.route("/restore_queue")
     def restore_queue():
+        access_token = session.get("access_token")
+        if not access_token:
+            return redirect(url_for("login"))
         
+        filename = request.args.get("filename")
+        if not filename:
+            return "Filename not provided"
+        
+        path = os.path.join("exports", filename)
+        if not os.path.exists(path):
+            return f"No such file: {filename}"
+        
+        with open(path, "r") as f:
+            queue_data = json.load(f)
+        
+        uris = []
+        now = queue_data.get("currently_playing")
+        if now:
+            uris.append(now.get("uri"))
+
+        for track in queue_data.get("queue", []):
+            uris.append(track.get("uri"))
+
+        if not uris:
+            return "No URIs found in saved queue."
+        
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+        }
+        queue_url = "https://api.spotify.com/v1/me/player/queue"
+        for uri in uris:
+            requests.post(f"{queue_url}?uri={uri}", headers=headers)
+
+        return f"Restored queue from {filename} with {len(uris)} tracks."
