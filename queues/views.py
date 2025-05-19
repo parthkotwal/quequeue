@@ -8,14 +8,17 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
-
 from .models import User, Queue, Track
+import uuid
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import boto3
+import mimetypes
 
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_ME_URL = "https://api.spotify.com/v1/me"
 SCOPE = "user-read-playback-state user-modify-playback-state user-read-currently-playing"
-
 
 def login(request):
     params = {
@@ -67,6 +70,35 @@ def callback(request):
     request.session["user_id"] = user.id
     return JsonResponse({"message": "Login successful", "user": display_name})
 
+@csrf_exempt
+@require_http_methods(['POST'])
+def upload_image(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not logged in"}, status=401)
+    
+    image_file = request.FILES.get("image")
+    if not image_file:
+        return JsonResponse({"error": "No image provided"}, status=400)
+    
+    filename = f"queue_covers/{uuid.uuid4()}_{image_file.name}"
+    content_type = image_file.content_type or mimetypes.guess_type(image_file.name)[0] or "image/jpeg"
+
+    try:
+        settings.S3.upload_fileobj(
+            image_file,
+            settings.AWS_STORAGE_BUCKET_NAME,
+            filename,
+            ExtraArgs={
+                "ContentType": content_type
+            }
+        )
+        image_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{filename}"
+        return JsonResponse({"image_url": image_url})
+    
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -78,6 +110,7 @@ def export_queue(request):
     body = json.loads(request.body)
     queue_name = body.get("name")
     image_url = body.get("image_url")
+    description = body.get("description")
 
     if not queue_name or not image_url:
         return JsonResponse({"error": "Missing name or image_url"}, status=400)
@@ -93,7 +126,8 @@ def export_queue(request):
     new_queue = Queue.objects.create(
         user=user,
         name=queue_name,
-        image_url=image_url
+        image_url=image_url,
+        description=description
     )
 
     def extract_track(track_json):
@@ -186,7 +220,8 @@ def list_user_queues(request):
             "id": q.id,
             "name": q.name,
             "created_at": q.created_at.isoformat(),
-            "image_url": q.image_url
+            "image_url": q.image_url,
+            "description": q.description
         }
         for q in queues
     ]

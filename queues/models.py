@@ -14,6 +14,7 @@ class Queue(models.Model):
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     image_url = models.URLField(default="https://example.com/default.jpg")
+    description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.name} ({self.user})"
