@@ -4,15 +4,18 @@ import urllib.parse
 import json
 from django.http import JsonResponse, HttpResponseRedirect
 from django.conf import settings
+from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now
+
 from .models import User, Queue, Track
 
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_ME_URL = "https://api.spotify.com/v1/me"
-SCOPE = "user-read-playback-state user-read-currently-playing"
+SCOPE = "user-read-playback-state user-modify-playback-state user-read-currently-playing"
+
 
 def login(request):
     params = {
@@ -23,6 +26,7 @@ def login(request):
     }
     full_auth_url = f"{SPOTIFY_AUTH_URL}?{urllib.parse.urlencode(params)}"
     return HttpResponseRedirect(full_auth_url)
+
 
 @csrf_exempt
 def callback(request):
@@ -101,7 +105,6 @@ def export_queue(request):
         }
     
     tracks = []
-    position = 0
     now_playing = queue_data.get("currently_playing")
     if now_playing:
         tracks.append(extract_track(now_playing))
@@ -118,3 +121,74 @@ def export_queue(request):
         )
 
     return JsonResponse({"message": "Queue saved successfully", "queue_id": new_queue.id})
+
+
+@require_http_methods(["GET"])
+def restore_queue(request, queue_id:int):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+    
+    user = get_object_or_404(User, id=user_id)
+    queue = get_object_or_404(Queue, id=queue_id, user=user)
+
+    access_token = user.access_token
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+
+    tracks = queue.tracks.order_by("position")
+    if not tracks:
+        return JsonResponse({"error": "Queue is empty"}, status=400)
+    
+    success = 0
+    failed = []
+    for track in tracks:
+        queue_uri = track.track_uri
+        response = requests.post(
+            f"{SPOTIFY_ME_URL}/player/queue?uri={queue_uri}",
+            headers=headers
+        )
+
+        if response.status_code in {204, 200}:
+            success += 1
+        else:
+            failed.append({
+                "track": track.track_name,
+                "uri": queue_uri,
+                "error": response.text
+            })
+
+    if success == 0:
+        return JsonResponse({
+            "error": "Failed to queue any tracks.",
+            "details": failed
+        }, status=500)
+
+    return JsonResponse({
+        "message": f"Restored {success} tracks to the queue.",
+        "failures": failed if failed else None
+    }, status=207 if failed else 200)
+
+
+@require_http_methods(['GET'])
+def list_user_queues(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+    
+    user = get_object_or_404(User, id=user_id)
+    queues = Queue.objects.filter(user=user).order_by("-created_at")
+
+    data = [
+        {
+            "id": q.id,
+            "name": q.name,
+            "created_at": q.created_at.isoformat(),
+            "image_url": q.image_url
+        }
+        for q in queues
+    ]
+
+    return JsonResponse({"queues":data})
