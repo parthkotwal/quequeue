@@ -70,35 +70,6 @@ def callback(request):
     request.session["user_id"] = user.id
     return JsonResponse({"message": "Login successful", "user": display_name})
 
-@csrf_exempt
-@require_http_methods(['POST'])
-def upload_image(request):
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return JsonResponse({"error": "Not logged in"}, status=401)
-    
-    image_file = request.FILES.get("image")
-    if not image_file:
-        return JsonResponse({"error": "No image provided"}, status=400)
-    
-    filename = f"queue_covers/{uuid.uuid4()}_{image_file.name}"
-    content_type = image_file.content_type or mimetypes.guess_type(image_file.name)[0] or "image/jpeg"
-
-    try:
-        settings.S3.upload_fileobj(
-            image_file,
-            settings.AWS_STORAGE_BUCKET_NAME,
-            filename,
-            ExtraArgs={
-                "ContentType": content_type
-            }
-        )
-        image_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{filename}"
-        return JsonResponse({"image_url": image_url})
-    
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -155,6 +126,40 @@ def export_queue(request):
         )
 
     return JsonResponse({"message": "Queue saved successfully", "queue_id": new_queue.id})
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def upload_queue_image(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not logged in"}, status=401)
+    
+    queue_id = request.POST.get("queue_id")
+    image_file = request.FILES.get("image")
+
+    if not queue_id or not image_file:
+        return JsonResponse({"error": "Missing queue_id or image"}, status=400)
+    
+    filename = f"queue_covers/{uuid.uuid4()}_{image_file.name}"
+    content_type = image_file.content_type or mimetypes.guess_type(image_file.name)[0] or "image/jpeg"
+
+    try:
+        settings.S3.upload_fileobj(
+            image_file,
+            settings.AWS_STORAGE_BUCKET_NAME,
+            filename,
+            ExtraArgs={
+                "ContentType": content_type
+            }
+        )
+        image_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{filename}"
+        Queue.objects.filter(id=queue_id, user_id=user_id).update(image_url=image_url)
+
+        return JsonResponse({"image_url": image_url})
+    
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 
 @require_http_methods(["GET"])
