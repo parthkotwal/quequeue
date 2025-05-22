@@ -7,13 +7,12 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.timezone import now
-from .models import User, Queue, Track
+from django.utils.timezone import now, timedelta
+from models import User, Queue, Track
 import uuid
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
 import boto3
 import mimetypes
+from spotify import SpotifyClient
 
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
@@ -51,6 +50,9 @@ def callback(request):
     
     token_data = response.json()
     access_token = token_data.get("access_token")
+    refresh_token = token_data.get("refresh_token")
+    expires_in = token_data.get("expires_in")
+
 
     headers = {"Authorization": f"Bearer {access_token}"}
     user_resp = requests.get(SPOTIFY_ME_URL, headers=headers)
@@ -59,16 +61,25 @@ def callback(request):
     spotify_id = user_data.get("id")
     display_name = user_data.get("display_name", "")
 
+    token_expiration = now() + timedelta(seconds=expires_in)
+
+
     user, created = User.objects.update_or_create(
         spotify_id=spotify_id,
         defaults={
             "display_name": display_name,
             "access_token": access_token,
+            "refresh_token": refresh_token or "",
+            "expiration_time": token_expiration,
         },
     )
 
     request.session["user_id"] = user.id
-    return JsonResponse({"message": "Login successful", "user": display_name})
+    return JsonResponse({
+        "message": "Login successful", 
+        "user": display_name,
+        "token_expires": token_expiration.isoformat()
+        })
 
 
 @csrf_exempt
@@ -88,8 +99,8 @@ def export_queue(request):
 
 
     user = User.objects.get(id=user_id)
-    headers = {"Authorization": f"Bearer {user.access_token}"}
-    response = requests.get(SPOTIFY_ME_URL+"/player/queue", headers=headers)
+    client = SpotifyClient(user)
+    response = client.get("me/player/queue")
     if response.status_code != 200:
         return JsonResponse({"error": "Failed to fetch queue"}, status=500)
     
@@ -125,7 +136,7 @@ def export_queue(request):
             **track
         )
 
-    return JsonResponse({"message": "Queue saved successfully", "queue_id": new_queue.id})
+    return JsonResponse({"message": "Queue exported to app successfully", "queue_id": new_queue.id})
 
 @csrf_exempt
 @require_http_methods(['POST'])
@@ -171,24 +182,18 @@ def restore_queue(request, queue_id:int):
     user = get_object_or_404(User, id=user_id)
     queue = get_object_or_404(Queue, id=queue_id, user=user)
 
-    access_token = user.access_token
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
-    }
-
     tracks = queue.tracks.order_by("position")
     if not tracks:
         return JsonResponse({"error": "Queue is empty"}, status=400)
     
     success = 0
     failed = []
+
+    access_token = user.access_token
+    client = SpotifyClient(user)
     for track in tracks:
         queue_uri = track.track_uri
-        response = requests.post(
-            f"{SPOTIFY_ME_URL}/player/queue?uri={queue_uri}",
-            headers=headers
-        )
+        response = client.post("me/player/queue", params={"uri": queue_uri})
 
         if response.status_code in {204, 200}:
             success += 1

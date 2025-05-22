@@ -1,13 +1,17 @@
 from django.db import models
+from django.utils.timezone import now
 
 class User(models.Model):
     spotify_id = models.CharField(max_length=100, unique=True)
     display_name = models.CharField(max_length=100, blank=True)
     access_token = models.CharField(max_length=500)
+    refresh_token =  models.CharField(max_length=500,blank=True, null=True)
+    expiration_time = models.DateTimeField(default=now)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.display_name or self.spotify_id
+
     
 class Queue(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="queues")
