@@ -8,11 +8,11 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now, timedelta
-from models import User, Queue, Track
+from .models import User, Queue, Track
 import uuid
 import boto3
 import mimetypes
-from spotify import SpotifyClient
+from .spotify import SpotifyClient
 
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"

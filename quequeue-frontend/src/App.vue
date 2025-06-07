@@ -1,4 +1,5 @@
 <template>
+  <router-view />
   <div id="app">
     <h1>Que Queue</h1>
     <p>Welcome! This is a Spotify queue manager</p>
