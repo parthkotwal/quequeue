@@ -75,11 +75,7 @@ def callback(request):
     )
 
     request.session["user_id"] = user.id
-    return JsonResponse({
-        "message": "Login successful", 
-        "user": display_name,
-        "token_expires": token_expiration.isoformat()
-        })
+    return HttpResponseRedirect(f"{settings.FRONTEND_URL}/callback")
 
 
 @csrf_exempt
