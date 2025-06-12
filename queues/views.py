@@ -17,7 +17,7 @@ from .spotify import SpotifyClient
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_ME_URL = "https://api.spotify.com/v1/me"
-SCOPE = "user-read-playback-state user-modify-playback-state user-read-currently-playing"
+SCOPE = "user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read"
 
 def login(request):
     params = {
