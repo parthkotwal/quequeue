@@ -233,3 +233,14 @@ def list_user_queues(request):
     ]
 
     return JsonResponse({"queues":data})
+
+@require_http_methods(['GET'])
+def smart_suggestion(request):
+    # extract queue tracks
+    # match track names to any in dataset
+    # average their features into a feature vector
+    # scale vector w/ scaler.transform(vector)
+    # assign cluster w/ kmeans.predict
+    # query songs from that cluster, exlcuding queue tracks
+    # Return top 3 tracks by cosine distance
+    pass
