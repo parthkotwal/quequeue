@@ -289,16 +289,13 @@ def smart_suggestions(request, queue_id:int):
     queue = get_object_or_404(Queue, id=queue_id, user=user)
 
     # Cache
-    cache_key = f"smart_sugg_u{user.id}_q{queue.id}"
-    if request.GET.get("refresh") == "1":
-        cached = None
-    else:
+    cache_key = f'smart_sugg_u{user.id}_q{queue.id}'
+    if request.GET.get('refresh') != '1':
         cached = cache.get(cache_key)
         if cached:
-            return JsonResponse({"suggestions": cached})
+            return JsonResponse({'suggestions': cached})
         
-    
-    
+
     # extract queue tracks
     uris = list(queue.tracks.order_by('position').values_list('track_uri', flat=True))
     
@@ -379,4 +376,4 @@ def smart_suggestions(request, queue_id:int):
     return JsonResponse({"suggestions": response_payload})
 
     # USE FUZZY MATCHING DUE TO EXPLICIT VS NOT EXPLICIT
-    # ALSO IMPROVE BY ARTIST MATCHING
+    # ALSO IMPROVE BY ARTIST MATCHING BY ASKING NEW CHAT
