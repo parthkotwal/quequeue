@@ -8,4 +8,5 @@ urlpatterns = [
     path('restore_queue/<int:queue_id>/', views.restore_queue, name="restore_queue"),
     path('my_queues/', views.list_user_queues, name="list_user_queues"),
     path("upload_image/", views.upload_queue_image, name="upload_image"),
+    path('suggest/<int:queue_id>/', views.smart_suggestions, name='smart_suggestions'),
 ]
