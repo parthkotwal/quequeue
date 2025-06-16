@@ -30,7 +30,7 @@ SCOPE = "user-read-playback-state user-modify-playback-state user-read-currently
 ml_data = joblib.load("song_data/ml_bundle.joblib")
 DF:pd.DataFrame = ml_data['data']
 DF.set_index("uri", inplace=True)
-URIS = ml_data['uris']
+URIS = DF.index.values
 SCALED_FEATURE_MATRIX = ml_data['features']
 KMEANS:sklearn.cluster.KMeans = ml_data['kmeans']
 SCALER:sklearn.preprocessing.StandardScaler = ml_data['scaler']
@@ -264,7 +264,11 @@ def list_user_queues(request):
 
 def get_feature_rows(uris):
     existing = DF.index.intersection(uris)
-    return [DF.loc[uri, FEATURE_COLUMNS].values for uri in existing]
+    rows = [DF.loc[uri, FEATURE_COLUMNS].values for uri in existing]
+    return rows
+
+def uri_to_id(uri):
+    return uri.split(":")[-1]
 
 @csrf_exempt
 @require_http_methods(['GET'])
@@ -286,9 +290,14 @@ def smart_suggestions(request, queue_id:int):
 
     # Cache
     cache_key = f"smart_sugg_u{user.id}_q{queue.id}"
-    cached = cache.get(cache_key)
-    if cached:
-        return JsonResponse({"suggestions": cached})
+    if request.GET.get("refresh") == "1":
+        cached = None
+    else:
+        cached = cache.get(cache_key)
+        if cached:
+            return JsonResponse({"suggestions": cached})
+        
+    
     
     # extract queue tracks
     uris = list(queue.tracks.order_by('position').values_list('track_uri', flat=True))
@@ -307,6 +316,7 @@ def smart_suggestions(request, queue_id:int):
 
     # predict cluster
     cluster_id = int(KMEANS.predict(scaled_vector)[0])
+    print(f"Cluster: {cluster_id}")
 
     # filter dataset to this cluster
     candidate_indices = np.where(KMEANS.labels_ == cluster_id)[0]
@@ -331,19 +341,42 @@ def smart_suggestions(request, queue_id:int):
     tracks = Track.objects.filter(track_uri__in=selected_uris)
     track_dict = {t.track_uri: t for t in tracks}
     response_payload = []
+
     for uri in selected_uris:
-        track = track_dict.get(uri)
-        if track:
+        if uri in track_dict:
+            track = track_dict[uri]
             response_payload.append({
                 "track_uri": uri,
                 "track_name": track.track_name,
                 "artist_name": track.artist_name,
                 "album_image_url": track.album_image_url,
             })
-        
 
+    # fallback in case track not in DB
+    client = SpotifyClient(user)   
+    track_ids = [uri_to_id(uri) for uri in selected_uris]
+    response = client.get(f"tracks?ids={','.join(track_ids)}")
+    if response.status_code != 200:
+        return JsonResponse({"error": "Failed to fetch track metadata from Spotify"}, status=500)
 
-    cache.set(cache_key, response_payload, timeout=60*60*24)
+    items = response.json().get("tracks", [])
+    metadata = {item["id"]:item for item in items}
+    for uri in selected_uris:
+        if uri not in track_dict:
+            sid = uri_to_id(uri)
+            item = metadata.get(sid)
+            if item:
+                response_payload.append({
+                    "track_uri": uri,
+                    "track_name": item.get("name"),
+                    "artist_name": item.get("artists", [{}])[0].get("name"),
+                    "album_image_url": item.get("album", {}).get("images", [{}])[0].get("url"),
+                })
+    
+    if response_payload:
+        cache.set(cache_key, response_payload, timeout=60*60*24)
+
     return JsonResponse({"suggestions": response_payload})
 
-    # MAYBE USE FUZZY MATCHING DUE TO EXPLICIT VS NOT EXPLICIT
+    # USE FUZZY MATCHING DUE TO EXPLICIT VS NOT EXPLICIT
+    # ALSO IMPROVE BY ARTIST MATCHING
