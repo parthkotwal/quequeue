@@ -1,6 +1,6 @@
 <template>
     <div class="auth-callback">
-        <p>Processing login...</p>
+        <p>Logging you in with Spotify...</p>
     </div>
 </template>
 
@@ -8,27 +8,31 @@
 import { onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
-import { useSessionStore } from '@/stores/session';
+import { useSessionStore } from '../stores/session';
 
 const router = useRouter();
 const session = useSessionStore();
 
+const route = useRoute()
+const code = route.query.code
+
 onMounted(async () => { // async arrow function
     try {
-        const apiURL = import.meta.env.VITE_API_URL + '/list_user_queues'
-        const res = await axios.get(apiURL, {
+        const res = await axios.get('/api/verify-auth/', {
             withCredentials: true, // needed for Django to use session cookies
-        })
+        });
 
-        if (res.status === 200) {
-            // Store user login state
-            session.setUser({ name: res.data.queues[0]?.user_display_name || "User" })
-            router.push('/dashboard')
+        const { authenticated, user_display_name } = res.data;
+
+        if (authenticated) {
+            session.setUser({ name: user_display_name });
+            router.push('/dashboard');
         } else {
-            router.push('/login')
+            router.push('/login');
         }
+
     } catch (err) {
-        console.error("Auth failed:", err)
+        console.error("Failed to authenticate with Spotify:", err)
         router.push('/login')
     }
 });

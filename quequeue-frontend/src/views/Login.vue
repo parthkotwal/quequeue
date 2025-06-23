@@ -9,11 +9,8 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
 function connectSpotify() {
-    window.location.href = import.meta.env.VITE_API_URL + '/login'
+  window.location.href = '/api/login'
 }
 </script>
 

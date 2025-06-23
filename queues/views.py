@@ -8,6 +8,7 @@ from django.utils.timezone import now, timedelta
 from django.core.cache import cache
 from .models import User, Queue, Track
 from .spotify import SpotifyClient
+from functools import wraps
 import requests
 import urllib.parse
 import json
@@ -39,8 +40,6 @@ FEATURE_COLUMNS = [
     'speechiness', 'acousticness', 'instrumentalness', 
     'liveness', 'valence', 'tempo', 'duration_ms', 'time_signature'
 ]
-
-
 
 def login(request):
     params = {
@@ -76,16 +75,13 @@ def callback(request):
     refresh_token = token_data.get("refresh_token")
     expires_in = token_data.get("expires_in")
 
-
     headers = {"Authorization": f"Bearer {access_token}"}
     user_resp = requests.get(SPOTIFY_ME_URL, headers=headers)
     user_data = user_resp.json()
 
     spotify_id = user_data.get("id")
     display_name = user_data.get("display_name", "")
-
     token_expiration = now() + timedelta(seconds=expires_in)
-
 
     user, created = User.objects.update_or_create(
         spotify_id=spotify_id,
@@ -98,13 +94,35 @@ def callback(request):
     )
 
     request.session["user_id"] = user.id
-    # return HttpResponseRedirect(f"{settings.FRONTEND_URL}/callback")
+    request.session["user_display_name"] = display_name
+    request.session.save()
+
+    return HttpResponseRedirect(f"{settings.FRONTEND_URL}/callback?status=ok")
+
+def login_required(view_func):
+    @wraps(view_func)
+    def wrapped_view(request, *args, **kwargs):
+        if "user_id" not in request.session:
+            return JsonResponse({"authenticated": False}, status=401)
+        return view_func(request, *args, **kwargs)
+    return wrapped_view
+
+@login_required
+def verify_auth(request):
     return JsonResponse({
-        "message": "Login successful", 
-        "user": display_name,
-        "token_expires": token_expiration.isoformat()
+        "authenticated": True,
+        "user_display_name": request.user.display_name
     })
 
+@login_required
+def current_user(request):
+    user = get_object_or_404(User, pk=request.session["user_id"])
+    return JsonResponse({
+        "authenticated": True,
+        "user_id": user.id,
+        "display_name": user.display_name,
+        "spotify_id": user.spotify_id,
+    })
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -241,7 +259,7 @@ def restore_queue(request, queue_id:int):
 
 
 @require_http_methods(['GET'])
-def list_user_queues(request):
+def my_queues(request):
     user_id = request.session.get("user_id")
     if not user_id:
         return JsonResponse({"error": "Not authenticated"}, status=401)
