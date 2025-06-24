@@ -9,6 +9,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from './views/Login.vue'
 import AuthCallback from './views/AuthCallback.vue'
 import Dashboard from './views/Dashboard.vue'
+import QueueDetail from './views/QueueDetail.vue'
 
 const routes = [
     { 
@@ -24,6 +25,11 @@ const routes = [
         component: Dashboard, 
         meta: { requiresAuth: true }
     },
+    {
+        path: '/queue/:id', 
+        component: QueueDetail,
+        meta: { requiresAuth: true }
+    }
 ]
 
 const router = createRouter({

@@ -257,6 +257,35 @@ def restore_queue(request, queue_id:int):
         "failures": failed if failed else None
     }, status=207 if failed else 200)
 
+@require_http_methods(['GET'])
+def get_queue_details(request, queue_id:int):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+    
+    user = get_object_or_404(User, id=user_id)
+    queue = get_object_or_404(Queue, user=user, id=queue_id)
+
+    track_data = [
+        {
+            "id": t.id,
+            "track_name": t.track_name,
+            "track_uri": t.track_uri,
+            "artist_name": t.artist_name,
+            "album_image_url": t.album_image_url,
+            "position": t.position
+        }
+        for t in queue.tracks.order_by("position")
+    ]
+
+    return JsonResponse({
+        "id": queue.id,
+        "name": queue.name,
+        "description": queue.description,
+        "created_at": queue.created_at.isoformat(),
+        "image_url": queue.image_url,
+        "tracks": track_data
+    })
 
 @require_http_methods(['GET'])
 def my_queues(request):
