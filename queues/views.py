@@ -9,11 +9,11 @@ from django.core.cache import cache
 from .models import User, Queue, Track
 from .spotify import SpotifyClient
 from functools import wraps
+from concurrent.futures import ThreadPoolExecutor, as_completed 
 import requests
 import urllib.parse
 import json
 import uuid
-import boto3
 import mimetypes
 import joblib
 import pandas as pd
@@ -26,7 +26,6 @@ SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_ME_URL = "https://api.spotify.com/v1/me"
 SCOPE = "user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read"
-
 
 ml_data = joblib.load("song_data/ml_bundle.joblib")
 DF:pd.DataFrame = ml_data['data']
@@ -214,7 +213,6 @@ def upload_queue_image(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-
 @require_http_methods(["GET"])
 def restore_queue(request, queue_id:int):
     user_id = request.session.get("user_id")
@@ -231,20 +229,27 @@ def restore_queue(request, queue_id:int):
     success = 0
     failed = []
 
-    access_token = user.access_token
-    client = SpotifyClient(user)
-    for track in tracks:
-        queue_uri = track.track_uri
-        response = client.post("me/player/queue", params={"uri": queue_uri})
-
+    def queue_track(track):
+        uri = track.track_uri
+        response = client.post("me/player/queue", params={"uri": uri})
         if response.status_code in {204, 200}:
-            success += 1
+            return (True, None)
         else:
-            failed.append({
+            return (False, {
                 "track": track.track_name,
-                "uri": queue_uri,
+                "uri": uri,
                 "error": response.text
             })
+
+    client = SpotifyClient(user)
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {executor.submit(queue_track, track): track for track in tracks}
+        for future in as_completed(futures):
+            success_flag, failure_info = future.result()
+            if success_flag:
+                success += 1
+            else:
+                failed.append(failure_info)
 
     if success == 0:
         return JsonResponse({
@@ -256,6 +261,7 @@ def restore_queue(request, queue_id:int):
         "message": f"Restored {success} tracks to the queue.",
         "failures": failed if failed else None
     }, status=207 if failed else 200)
+    
 
 @require_http_methods(['GET'])
 def get_queue_details(request, queue_id:int):
