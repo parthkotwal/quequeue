@@ -3,21 +3,18 @@
         <div v-if="loading">Loading queue...</div>
         
         <div v-else>
-        <h1 class="text-3xl font-bold mb-2">{{ queue.name }}</h1>
-        <p class="text-gray-700 mb-4">{{ queue.description }}</p>
-        <img :src="queue.image_url" class="w-full max-w-md mb-6" alt="Queue Cover" />
+            <h1 class="text-3xl font-bold mb-2">{{ queue.name }}</h1>
+            <p class="text-gray-700 mb-4">{{ queue.description }}</p>
+            <img :src="queue.image_url" class="w-full max-w-md mb-6" alt="Queue Cover" />
 
-        <button @click="restoreQueue" class="bg-blue-600 text-white px-4 py-2 mb-6 rounded">
-            Restore to Spotify
-        </button>
+            <button @click="restoreQueue" class="bg-blue-600 text-white px-4 py-2 mb-6 rounded">
+                Restore to Spotify
+            </button>
 
-        <div v-if="queue.tracks.length">
-            <h2 class="text-xl font-semibold mb-2">Tracks</h2>
-            <div v-for="track in queue.tracks" :key="track.id" class="mb-4 p-2 border rounded">
-            <p class="font-medium">{{ track.position + 1 }}. {{ track.track_name }} - {{ track.artist_name }}</p>
-            <img :src="track.album_image_url" class="w-32" />
+            <div v-if="queue.tracks.length">
+                <h2 class="text-xl font-semibold mb-2">Tracks</h2>
+                <TrackList :tracks="queue.tracks"/>
             </div>
-        </div>
         </div>
     </div>
 </template>
@@ -25,6 +22,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import TrackList from '../components/TrackList.vue';
 import axios from 'axios';
 
 const route = useRoute()
