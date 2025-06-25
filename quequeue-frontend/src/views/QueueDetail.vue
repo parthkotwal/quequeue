@@ -35,7 +35,7 @@ const error = ref(null)
 const fetchQueue = async() => {
     loading.value = true
     try {
-        const res = await axios.get('/api/queue/'+queueId+'/details/', {
+        const res = await axios.get('/api/queue/'+ queueId +'/', {
             withCredentials: true,
         })
 

@@ -2,14 +2,27 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # LOGIN AND AUTHENTICATION
     path('login/', views.login),
     path('callback/', views.callback),
     path('verify_auth/', views.verify_auth, name='verify_auth'),
     path('current_user/', views.current_user, name="current_user"),
+
+    # EXPORT
     path('export_queue/', views.export_queue, name="export_queue"),
-    path('restore_queue/<int:queue_id>/', views.restore_queue),
-    path('my_queues/', views.my_queues, name="my_queues"),
-    path('queue/<int:queue_id>/details/', views.get_queue_details),
+
+    # QUEUE FUNCTIONS
+    path('queue/<int:queue_id>/', views.get_queue, name="get_queue"),
+    path('queue/<int:queue_id>/', views.update_queue, name="update_queue"),
+    path('queue/<int:queue_id>/', views.delete_queue, name="delete_queue"),
     path("upload_image/", views.upload_queue_image, name="upload_image"),
+
+    # RESTORE QUEUE
+    path('restore_queue/<int:queue_id>/', views.restore_queue),
+
+    # ALL QUEUES
+    path('my_queues/', views.my_queues, name="my_queues"),
+    
+    # SMART SUGGESTION
     path('suggest/<int:queue_id>/', views.smart_suggestions, name='smart_suggestions'),
 ]

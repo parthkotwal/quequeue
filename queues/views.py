@@ -212,6 +212,81 @@ def upload_queue_image(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+@csrf_exempt
+@require_http_methods(['GET'])
+def get_queue(request, queue_id:int):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+    
+    user = get_object_or_404(User, id=user_id)
+    queue = get_object_or_404(Queue, user=user, id=queue_id)
+
+    track_data = [
+        {
+            "id": t.id,
+            "track_name": t.track_name,
+            "track_uri": t.track_uri,
+            "artist_name": t.artist_name,
+            "album_image_url": t.album_image_url,
+            "position": t.position
+        }
+        for t in queue.tracks.order_by("position")
+    ]
+
+    return JsonResponse({
+        "id": queue.id,
+        "name": queue.name,
+        "description": queue.description,
+        "created_at": queue.created_at.isoformat(),
+        "image_url": queue.image_url,
+        "tracks": track_data
+    })
+
+
+@csrf_exempt
+@require_http_methods(["PATCH"])
+def update_queue(request, queue_id:int):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    
+
+    user = get_object_or_404(User, id=user_id)
+    queue = get_object_or_404(Queue, id=queue_id, user=user)
+    name = data.get("name")
+    description = data.get("description")
+
+    if name:
+        queue.name = name
+    
+    if description is not None:
+        queue.description = description
+
+    queue.save()
+    return JsonResponse({"message": "Queue updated successfully"})
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_queue(request, queue_id):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+    
+    user = get_object_or_404(User, id=user_id)
+    queue = get_object_or_404(Queue, id=queue_id, user=user)
+    queue.delete()
+    
+    return JsonResponse({"message": "Queue deleted"})
+
+
+
 
 @require_http_methods(["GET"])
 def restore_queue(request, queue_id:int):
@@ -261,37 +336,8 @@ def restore_queue(request, queue_id:int):
         "message": f"Restored {success} tracks to the queue.",
         "failures": failed if failed else None
     }, status=207 if failed else 200)
-    
 
-@require_http_methods(['GET'])
-def get_queue_details(request, queue_id:int):
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return JsonResponse({"error": "Not authenticated"}, status=401)
-    
-    user = get_object_or_404(User, id=user_id)
-    queue = get_object_or_404(Queue, user=user, id=queue_id)
 
-    track_data = [
-        {
-            "id": t.id,
-            "track_name": t.track_name,
-            "track_uri": t.track_uri,
-            "artist_name": t.artist_name,
-            "album_image_url": t.album_image_url,
-            "position": t.position
-        }
-        for t in queue.tracks.order_by("position")
-    ]
-
-    return JsonResponse({
-        "id": queue.id,
-        "name": queue.name,
-        "description": queue.description,
-        "created_at": queue.created_at.isoformat(),
-        "image_url": queue.image_url,
-        "tracks": track_data
-    })
 
 @require_http_methods(['GET'])
 def my_queues(request):
