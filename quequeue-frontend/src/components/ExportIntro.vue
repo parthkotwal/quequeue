@@ -1,0 +1,76 @@
+<template>
+    <div class="space-y-6">
+        <h2 class="text-2xl font-bold">Export Your Current Spotify Queue</h2>
+        <p>
+            We'll grab and save the currently playing track and the next songs in your queue. 
+        </p>
+
+        <div class="bg-gray-100 p-4 rounded">
+            <p class="mb-2">
+                For this to work, Spotify requires a playback device to be active. If nothing is playing, click below to nudge it:
+            </p>
+            <button @click="tryPlayback" class="bg-blue-600 text-white px-4 py-2 rounded" :disabled="loading">
+                ▶ Play for 1s
+            </button>
+            <p v-if="playbackError" class="text-red-600 mt-2">{{ playbackError }}</p>
+        </div>
+
+        <div>
+            <button @click="startExport" class="bg-green-600 text-white px-6 py-3 rounded" :disabled="loading">
+                Continue to Preview
+            </button>
+            <p v-if="error" class="text-red-600 mt-2">{{ error }}</p>
+        </div>
+
+    </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import axios from 'axios';
+
+const emit = defineEmits(['next']);
+const loading = ref(null);
+const playbackError = ref(null);
+
+const tryPlayback = async () => {
+    playbackError.value = null;
+    try {
+        await axios.put(
+            'https://api.spotify.com/v1/me/player/play',
+            {},
+            { withCredentials: true }
+        );
+        setTimeout(() => {
+            axios.put(
+                'https://api.spotify.com/v1/me/player/pause',
+                {},
+                { withCredentials: true }
+            )
+        }, 1000);
+    } catch (err) {
+        playbackError.value = "Playback failed. Please open Spotify on your desired device and press play on the current track.";
+    }
+}
+
+const startExport = async () => {
+    loading.value = true;
+    error.value = null;
+    try {
+        const res = await axios.post('/api/export_queue/', {
+            name: "Dummy",
+            image_url: "Dummy",
+            description: "Dummy"
+        }, { withCredentials: true })
+
+        emit('next', {
+            queueId: res.data.queue_id
+        })
+    } catch (err) {
+        error.value = "Could not export queue. Please ensure something is playing!"
+  } finally {
+    loading.value = false
+  }
+}
+
+</script>
