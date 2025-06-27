@@ -6,8 +6,8 @@
         </p>
 
         <div class="bg-gray-100 p-4 rounded">
-            <p class="mb-2">
-                For this to work, Spotify requires a playback device to be active. If nothing is playing, click below to nudge it:
+            <p class="mb-2 text-black">
+                For this to work, Spotify requires a playback device to be active. If nothing is playing, click below to nudge it (you need to still have played something recently):
             </p>
             <button @click="tryPlayback" class="bg-blue-600 text-white px-4 py-2 rounded" :disabled="loading">
                 ▶ Play for 1s
@@ -32,21 +32,18 @@ import axios from 'axios';
 const emit = defineEmits(['next']);
 const loading = ref(null);
 const playbackError = ref(null);
+const error = ref(null);
 
 const tryPlayback = async () => {
     playbackError.value = null;
     try {
-        await axios.put(
-            'https://api.spotify.com/v1/me/player/play',
-            {},
-            { withCredentials: true }
-        );
+        await axios.post('/api/play_track/', null, {
+            withCredentials: true
+        });
         setTimeout(() => {
-            axios.put(
-                'https://api.spotify.com/v1/me/player/pause',
-                {},
-                { withCredentials: true }
-            )
+            axios.post('/api/pause_track/', null, {
+            withCredentials: true
+        })
         }, 1000);
     } catch (err) {
         playbackError.value = "Playback failed. Please open Spotify on your desired device and press play on the current track.";

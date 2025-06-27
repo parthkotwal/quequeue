@@ -8,13 +8,17 @@ urlpatterns = [
     path('verify_auth/', views.verify_auth, name='verify_auth'),
     path('current_user/', views.current_user, name="current_user"),
 
+    # PLAYBACK
+    path('play_track/', views.play_track),
+    path('pause_track/', views.pause_track),
+
     # EXPORT
     path('export_queue/', views.export_queue, name="export_queue"),
 
     # QUEUE FUNCTIONS
-    path('queue/<int:queue_id>/', views.get_queue, name="get_queue"),
-    path('queue/<int:queue_id>/', views.update_queue, name="update_queue"),
-    path('queue/<int:queue_id>/', views.delete_queue, name="delete_queue"),
+    path('queue/<int:queue_id>/get/', views.get_queue, name="get_queue"),
+    path('queue/<int:queue_id>/update/', views.update_queue, name="update_queue"),
+    path('queue/<int:queue_id>/delete/', views.delete_queue, name="delete_queue"),
     path("upload_image/", views.upload_queue_image, name="upload_image"),
 
     # RESTORE QUEUE

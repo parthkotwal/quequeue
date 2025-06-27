@@ -1,7 +1,6 @@
 <template>
   <router-view />
   <div id="app">
-    <h1>Que Queue</h1>
   </div>
 </template>
 

@@ -16,9 +16,9 @@
 import { ref, computed } from 'vue';
 
 // Children Components
-import ExportIntro from '../components/ExportIntro.vue';
-import ExportPreview from '../components/ExportPreview.vue';
-import ExportDetails from '../components/ExportDetails.vue';
+import ExportIntro from './ExportIntro.vue'
+import ExportPreview from './ExportPreview.vue';
+import ExportDetails from './ExportDetails.vue';
 
 const step = ref(0);
 const queueId = ref(null);

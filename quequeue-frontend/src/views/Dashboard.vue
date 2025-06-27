@@ -2,8 +2,9 @@
     <div class="p-6 max-w-4xl mx-auto">
         <h1 class="text-3xl font-bold mb-4">Welcome, {{ session.user?.name || 'User' }}</h1>
 
-        <div class="mb-6">
+        <div class="mb-6 flex gap-4">
             <button @click="fetchQueues" class="bg-green-600 text-white px-4 py-2 rounded">Refresh Queues</button>
+            <button @click="goToExport" class="bg-blue-600 text-white px-4 py-2 rounded">Export Current Queue</button>
         </div>
 
         <div v-if="loading">
@@ -55,6 +56,10 @@ const fetchQueues = async () => {
 
 const goToQueue = (id) => {
     router.push('/queue/' + id)
+}
+
+const goToExport = () => {
+    router.push('/export')
 }
 
 onMounted(fetchQueues)

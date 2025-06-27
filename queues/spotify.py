@@ -45,3 +45,11 @@ class SpotifyClient:
         }
         url = f"https://api.spotify.com/v1/{endpoint}"
         return requests.post(url, headers=headers, json=data, params=params)
+    
+    def put(self, endpoint, data=None, params=None):
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json"
+        }
+        url = f"https://api.spotify.com/v1/{endpoint}"
+        return requests.put(url, headers=headers, json=data, params=params)

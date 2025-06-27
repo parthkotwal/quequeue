@@ -213,6 +213,42 @@ def upload_queue_image(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 @csrf_exempt
+@require_http_methods(["POST"])
+def play_track(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    user = get_object_or_404(User, id=user_id)
+    client = SpotifyClient(user)
+    
+    response = client.put("me/player/play")
+    
+    if response.status_code == 204:
+        return JsonResponse({"message": "Playback started"})
+    else:
+        return JsonResponse({"error": "Failed to start playback"}, status=response.status_code)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def pause_track(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    user = get_object_or_404(User, id=user_id)
+    client = SpotifyClient(user)
+
+    response = client.put("me/player/pause")
+
+    if response.status_code == 204:
+        return JsonResponse({"message": "Playback paused"})
+    else:
+        return JsonResponse({"error": "Failed to pause playback"}, status=response.status_code)
+
+
+@csrf_exempt
 @require_http_methods(['GET'])
 def get_queue(request, queue_id:int):
     user_id = request.session.get("user_id")
@@ -261,12 +297,16 @@ def update_queue(request, queue_id:int):
     queue = get_object_or_404(Queue, id=queue_id, user=user)
     name = data.get("name")
     description = data.get("description")
+    image_url = data.get("image_url")
 
     if name:
         queue.name = name
     
     if description is not None:
         queue.description = description
+
+    if image_url:
+        queue.image_url = image_url
 
     queue.save()
     return JsonResponse({"message": "Queue updated successfully"})
