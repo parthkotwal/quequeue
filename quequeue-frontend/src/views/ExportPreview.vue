@@ -45,17 +45,33 @@ const queue = ref(null)
 const loading = ref(true)
 const error = ref(null)
 
-const fetchQueue = async() => {
-    try {
-        const res = await axios.get('/api/queues/'+ props.queueId + '/get/', {
+const fetchQueue = async () => {
+    loading.value = true
+    error.value = null
+
+    const maxAttempts = 5
+    const delay = (ms) => new Promise((res) => setTimeout(res, ms))
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            const res = await axios.get(`/api/queue/${props.queueId}/get/`, {
             withCredentials: true
         })
-        queue.value = res.data
-    } catch (err) {
-        error.value = 'Failed to load queue. Try again or go back.'
-    } finally {
-        loading.value = false
+            queue.value = res.data
+            loading.value = false
+            return // success
+        } catch (err) {
+            if (attempt === maxAttempts) {
+                error.value = 'Failed to load queue. Please try again.'
+                loading.value = false
+                return
+            }
+            console.warn(`Retry ${attempt}...`)
+            await delay(500) // wait before retry
+        }
     }
+
+    loading.value = false
 }
 
 const confirm = () => {
@@ -68,7 +84,7 @@ const cancel = async () => {
         await axios.delete('/api/queues/'+ props.queueId + '/delete/', {
             withCredentials: true
         })
-        emit('cancel')
+        emit('back')
     } catch (err) {
         error.value = 'Failed to cancel. Try again.'
         loading.value = false

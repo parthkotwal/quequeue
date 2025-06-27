@@ -34,6 +34,7 @@ const loading = ref(null);
 const playbackError = ref(null);
 const error = ref(null);
 
+
 const tryPlayback = async () => {
     playbackError.value = null;
     try {
@@ -53,6 +54,7 @@ const tryPlayback = async () => {
 const startExport = async () => {
     loading.value = true;
     error.value = null;
+    const delay = (ms) => new Promise((res) => setTimeout(res, ms))
     try {
         const res = await axios.post('/api/export_queue/', {
             name: "Dummy",
@@ -60,6 +62,7 @@ const startExport = async () => {
             description: "Dummy"
         }, { withCredentials: true })
 
+        await delay(200)
         emit('next', {
             queueId: res.data.queue_id
         })

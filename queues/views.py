@@ -327,44 +327,35 @@ def delete_queue(request, queue_id):
 
 
 
-
 @require_http_methods(["GET"])
-def restore_queue(request, queue_id:int):
+def restore_queue(request, queue_id: int):
     user_id = request.session.get("user_id")
     if not user_id:
         return JsonResponse({"error": "Not authenticated"}, status=401)
-    
+
     user = get_object_or_404(User, id=user_id)
     queue = get_object_or_404(Queue, id=queue_id, user=user)
 
-    tracks = queue.tracks.order_by("position")
+    tracks = list(queue.tracks.order_by("position"))  # Ensure it's evaluated
     if not tracks:
         return JsonResponse({"error": "Queue is empty"}, status=400)
-    
+
     success = 0
     failed = []
 
-    def queue_track(track):
+    client = SpotifyClient(user)
+
+    for track in tracks:
         uri = track.track_uri
         response = client.post("me/player/queue", params={"uri": uri})
         if response.status_code in {204, 200}:
-            return (True, None)
+            success += 1
         else:
-            return (False, {
+            failed.append({
                 "track": track.track_name,
                 "uri": uri,
                 "error": response.text
             })
-
-    client = SpotifyClient(user)
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {executor.submit(queue_track, track): track for track in tracks}
-        for future in as_completed(futures):
-            success_flag, failure_info = future.result()
-            if success_flag:
-                success += 1
-            else:
-                failed.append(failure_info)
 
     if success == 0:
         return JsonResponse({
@@ -376,6 +367,7 @@ def restore_queue(request, queue_id:int):
         "message": f"Restored {success} tracks to the queue.",
         "failures": failed if failed else None
     }, status=207 if failed else 200)
+
 
 
 

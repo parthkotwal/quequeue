@@ -79,7 +79,7 @@ const handleFile = async (event) => {
     formData.append('image', file)
 
     try {
-        const res = await axios.post('/api/upload_queue_image/', formData, {
+        const res = await axios.post('/api/upload_image/', formData, {
             withCredentials: true,
             headers: {
                 'Content-Type': 'multipart/form-data'
@@ -87,6 +87,7 @@ const handleFile = async (event) => {
         })
     } catch (err) {
         error.value = 'Failed to upload image. Try again later.'
+        console.log(err)
     }
 }
 
@@ -101,7 +102,7 @@ const submitForm = async() => {
     }
 
     try {
-        await axios.patch('/api/queues/'+ props.queueId + '/update/', {
+        await axios.patch('/api/queue/'+ props.queueId + '/update/', {
             name: name.value,
             description: description.value,
             image_url: imageURL.value
