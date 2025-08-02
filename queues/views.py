@@ -393,6 +393,7 @@ def my_queues(request):
 
     return JsonResponse({"queues":data})
 
+
 def get_feature_rows(uris):
     existing = DF.index.intersection(uris)
     rows = [DF.loc[uri, FEATURE_COLUMNS].values for uri in existing]

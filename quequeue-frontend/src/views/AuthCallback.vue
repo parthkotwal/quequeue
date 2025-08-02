@@ -18,7 +18,7 @@ const code = route.query.code
 
 onMounted(async () => { // async arrow function
     try {
-        const res = await axios.get('/api/verify-auth/', {
+        const res = await axios.get('/api/verify_auth/', {
             withCredentials: true, // needed for Django to use session cookies
         });
 

@@ -5,7 +5,7 @@ urlpatterns = [
     # LOGIN AND AUTHENTICATION
     path('login/', views.login),
     path('callback/', views.callback),
-    path('verify_auth/', views.verify_auth, name='verify_auth'),
+    path('verify_auth/', views.verify_auth),
     path('current_user/', views.current_user, name="current_user"),
 
     # PLAYBACK
