@@ -27,7 +27,8 @@
 
 <script setup>
 import { ref } from 'vue';
-import axios from 'axios';
+import apiClient from '../api';
+
 
 const emit = defineEmits(['next']);
 const loading = ref(null);
@@ -38,13 +39,9 @@ const error = ref(null);
 const tryPlayback = async () => {
     playbackError.value = null;
     try {
-        await axios.post('/api/play_track/', null, {
-            withCredentials: true
-        });
+        await apiClient.post('/play_track/', null);
         setTimeout(() => {
-            axios.post('/api/pause_track/', null, {
-            withCredentials: true
-        })
+            apiClient.post('/pause_track/', null)
         }, 1000);
     } catch (err) {
         playbackError.value = "Playback failed. Please open Spotify on your desired device and press play on the current track.";
@@ -56,12 +53,11 @@ const startExport = async () => {
     error.value = null;
     const delay = (ms) => new Promise((res) => setTimeout(res, ms))
     try {
-        const res = await axios.post('/api/export_queue/', {
+        const res = await apiClient.post("/export_queue/", {
             name: "Dummy",
             image_url: "Dummy",
             description: "Dummy"
-        }, { withCredentials: true })
-
+        })
         await delay(200)
         emit('next', {
             queueId: res.data.queue_id

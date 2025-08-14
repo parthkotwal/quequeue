@@ -108,10 +108,12 @@ def login_required(view_func):
 
 @login_required
 def verify_auth(request):
+    user = get_object_or_404(User, pk=request.session["user_id"])
     return JsonResponse({
         "authenticated": True,
-        "user_display_name": request.user.display_name
+        "user_display_name": user.display_name
     })
+    
 
 @login_required
 def current_user(request):
@@ -436,7 +438,7 @@ def smart_suggestions(request, queue_id:int):
     if len(feature_rows) < 2:
         # not enough data for reliable vector
         return JsonResponse({
-            "error": "Not enough feature‑matched tracks for smart suggestions"
+            "error": "Not enough feature-matched tracks for smart suggestions"
         }, status=400)
     
     # compute vector

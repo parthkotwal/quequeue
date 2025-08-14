@@ -49,7 +49,8 @@
 
 <script setup>
 import { ref } from 'vue';
-import axios from 'axios';
+import apiClient from '../api';
+
 
 const props = defineProps({
     queueId: {
@@ -79,10 +80,9 @@ const handleFile = async (event) => {
     formData.append('image', file)
 
     try {
-        const res = await axios.post('/api/upload_image/', formData, {
-            withCredentials: true,
+        await apiClient.post('/upload_image/', formData, {
             headers: {
-                'Content-Type': 'multipart/form-data'
+                'Content-Type': 'multipart/form-data',
             }
         })
     } catch (err) {
@@ -102,14 +102,11 @@ const submitForm = async() => {
     }
 
     try {
-        await axios.patch('/api/queue/'+ props.queueId + '/update/', {
+        await apiClient.patch(`/queue/${props.queueId}/update/`, {
             name: name.value,
             description: description.value,
             image_url: imageURL.value
-        }, {
-            withCredentials: true
-        })
-        
+        })        
         emit('done')
 
     } catch (err) {

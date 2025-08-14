@@ -7,7 +7,7 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import axios from 'axios';
+import apiClient from '../api';
 import { useSessionStore } from '../stores/session';
 
 const router = useRouter();
@@ -18,10 +18,7 @@ const code = route.query.code
 
 onMounted(async () => { // async arrow function
     try {
-        const res = await axios.get('/api/verify_auth/', {
-            withCredentials: true, // needed for Django to use session cookies
-        });
-
+        const res = await apiClient.get(`/verify_auth/`)
         const { authenticated, user_display_name } = res.data;
 
         if (authenticated) {

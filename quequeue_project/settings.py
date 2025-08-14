@@ -31,7 +31,7 @@ if os.getenv("DEBUG", "False").lower() in ("true", "1"):
 else:
     DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'web']
 
 
 # Application definition
@@ -61,12 +61,13 @@ MIDDLEWARE = [
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",  # in case you switch hosts
-]
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://frontend:5173",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:5173",
+    "http://frontend:5173",
 ]
 
 ROOT_URLCONF = 'quequeue_project.urls'
@@ -173,10 +174,10 @@ S3 = boto3.client(
 
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
-SESSION_COOKIE_SAMESITE = 'None' 
+SESSION_COOKIE_SAMESITE = None 
 SESSION_SAVE_EVERY_REQUEST = True
 
 CSRF_COOKIE_SECURE = False  # Set to True in production
-CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SAMESITE = None
 
-FRONTEND_URL = "http://localhost:5173"
+FRONTEND_URL =  "http://127.0.0.1:5173"

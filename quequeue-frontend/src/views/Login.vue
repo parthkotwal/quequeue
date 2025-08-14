@@ -9,8 +9,10 @@
 </template>
 
 <script setup>
+import { browserBaseURL } from '../api';
+
 function connectSpotify() {
-  window.location.href = '/api/login'
+  window.location.href = `${browserBaseURL}/login/`;
 }
 </script>
 

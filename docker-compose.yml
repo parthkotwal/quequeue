@@ -28,6 +28,10 @@ services:
   frontend:
     image: node:18  # official Node.js image
     working_dir: /app
+    environment:
+      - IS_DOCKER=true
+      - VITE_API_URL_INTERNAL=http://web:8000
+      - VITE_API_URL_EXTERNAL=http://127.0.0.1:8000
     volumes:
       - ./quequeue-frontend:/app
       - /app/node_modules  # prevent node_modules overwrite

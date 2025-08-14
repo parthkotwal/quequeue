@@ -23,7 +23,8 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import TrackList from '../components/TrackList.vue';
-import axios from 'axios';
+import apiClient from '../api';
+
 
 const route = useRoute()
 const queueId = route.params.id
@@ -35,10 +36,7 @@ const error = ref(null)
 const fetchQueue = async() => {
     loading.value = true
     try {
-        const res = await axios.get('/api/queue/'+ queueId +'/get/', {
-            withCredentials: true,
-        })
-
+        const res = await apiClient.get(`/queue/${queueId}/get/`)
         queue.value = res.data
     } catch (err) {
         console.error("Error loading queue:", err)
@@ -49,9 +47,7 @@ const fetchQueue = async() => {
 
 const restoreQueue = async() => {
     try {
-        const res = await axios.get('/api/restore_queue/' + queueId + '/', {
-            withCredentials: true
-        })
+        const res = await apiClient.get(`/restore_queue/${queueId}/`)
         alert(res.data.message)
     } catch(err) {
         alert("Restore failed: " + err.response?.data?.error || err.message)

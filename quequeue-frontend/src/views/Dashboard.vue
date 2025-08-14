@@ -28,7 +28,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import apiClient from '../api';
 import { useSessionStore } from '../stores/session';
 import { useRouter } from 'vue-router';
 import QueueCard from '../components/QueueCard.vue';
@@ -42,9 +42,7 @@ const loading = ref(true)
 const fetchQueues = async () => {
     loading.value = true
     try {
-        const res  = await axios.get('/api/my_queues/', {
-            withCredentials: true
-        })
+        const res = await apiClient.get('/my_queues/')
         console.log('Queues response:', res.data)
         queues.value = res.data.queues
     } catch(err) {

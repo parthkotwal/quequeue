@@ -30,8 +30,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
 import TrackList from '../components/TrackList.vue';
+import apiClient from '../api';
 
 const props = defineProps({
     queueId: {
@@ -54,9 +54,8 @@ const fetchQueue = async () => {
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-            const res = await axios.get(`/api/queue/${props.queueId}/get/`, {
-            withCredentials: true
-        })
+            
+            const res = await apiClient.get(`/queue/${props.queueId}/get/`)
             queue.value = res.data
             loading.value = false
             return // success
@@ -81,9 +80,7 @@ const confirm = () => {
 const cancel = async () => {
     loading.value = true
     try {
-        await axios.delete('/api/queues/'+ props.queueId + '/delete/', {
-            withCredentials: true
-        })
+        const res = await apiClient.delete(`/queue/${props.queueId}/delete/`)
         emit('back')
     } catch (err) {
         error.value = 'Failed to cancel. Try again.'
