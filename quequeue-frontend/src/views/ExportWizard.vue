@@ -8,6 +8,7 @@
             @back="handleBack"
             @update-queue-data="(data) => (queueData = data)"
             @cancel="resetWizard"
+            @done="handleDone"
         />
     </div>
 </template>
@@ -19,6 +20,8 @@ import { ref, computed } from 'vue';
 import ExportIntro from './ExportIntro.vue'
 import ExportPreview from './ExportPreview.vue';
 import ExportDetails from './ExportDetails.vue';
+import { useRouter } from 'vue-router';
+import apiClient from '../api';
 
 const step = ref(0);
 const queueId = ref(null);
@@ -31,6 +34,8 @@ const steps = [
 ];
 
 const currentComponent = computed(() => steps[step.value]);
+const router = useRouter()
+
 
 function handleNext(payload = {}) {
     if (payload.queueId) {
@@ -49,7 +54,22 @@ function handleBack() {
     }
 }
 
-function resetWizard() {
+function handleDone() {
+    router.push('/dashboard')
+}
+
+
+async function resetWizard() {
+    if (queueId.value) {
+        try {
+            await apiClient.post('/cancel_export/', {
+                'queue_id':queueId.value
+            })
+        } catch (err) {
+            console.warn("Failed to cancel export", err)
+        }
+    }
+
     step.value = 0;
     queueId.value = null
     queueData.value = null

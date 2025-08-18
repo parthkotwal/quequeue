@@ -9,7 +9,7 @@ from django.core.cache import cache
 from .models import User, Queue, Track
 from .spotify import SpotifyClient
 from functools import wraps
-from concurrent.futures import ThreadPoolExecutor, as_completed 
+import time
 import requests
 import urllib.parse
 import json
@@ -182,8 +182,28 @@ def export_queue(request):
     return JsonResponse({"message": "Queue exported to app successfully", "queue_id": new_queue.id})
 
 @csrf_exempt
+@require_http_methods(["POST"])
+def cancel_export(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+    
+    try:
+        data = json.loads(request.body)
+        queue_id = data.get("queue_id")
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({"error": "Missing queue_id"}, status=400)
+
+    queue = Queue.objects.filter(id=queue_id, user_id=user_id).first()
+    if not queue:
+        return JsonResponse({"error": "Queue not found"}, status=404)
+
+    queue.delete()
+    return JsonResponse({"message": "Export canceled, queue deleted"})
+
+@csrf_exempt
 @require_http_methods(['POST'])
-def upload_queue_image(request):
+def upload_image(request):
     user_id = request.session.get("user_id")
     if not user_id:
         return JsonResponse({"error": "Not logged in"}, status=401)
@@ -331,6 +351,7 @@ def delete_queue(request, queue_id):
 
 @require_http_methods(["GET"])
 def restore_queue(request, queue_id: int):
+    start = time.time()
     user_id = request.session.get("user_id")
     if not user_id:
         return JsonResponse({"error": "Not authenticated"}, status=401)
@@ -365,6 +386,7 @@ def restore_queue(request, queue_id: int):
             "details": failed
         }, status=500)
 
+    print(time.time() - start)
     return JsonResponse({
         "message": f"Restored {success} tracks to the queue.",
         "failures": failed if failed else None

@@ -14,12 +14,13 @@ urlpatterns = [
 
     # EXPORT
     path('export_queue/', views.export_queue, name="export_queue"),
+    path('cancel_export/', views.cancel_export),
 
     # QUEUE FUNCTIONS
     path('queue/<int:queue_id>/get/', views.get_queue, name="get_queue"),
     path('queue/<int:queue_id>/update/', views.update_queue, name="update_queue"),
     path('queue/<int:queue_id>/delete/', views.delete_queue, name="delete_queue"),
-    path("upload_image/", views.upload_queue_image, name="upload_image"),
+    path("upload_image/", views.upload_image, name="upload_image"),
 
     # RESTORE QUEUE
     path('restore_queue/<int:queue_id>/', views.restore_queue),
