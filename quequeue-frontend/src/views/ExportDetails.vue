@@ -34,11 +34,11 @@
             </div>
 
             <div class="flex justify-between mt-6">
-                <button type="button" class="bg-gray-400 text-white px-4 py-2 rounded">
+                <button type="button" class="bg-gray-400 text-white px-4 py-2 rounded" @click="onBack" :disabled="submitting">
                     Back
                 </button>
 
-                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded" :disabled="submitting">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded" :disabled="submitting || !name">
                     Export
                 </button>
             </div>
@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
 import apiClient from '../api';
 
 
@@ -58,36 +58,48 @@ const props = defineProps({
         required: true
     }
 })
-
 const emit = defineEmits(['done', 'back'])
 
 const name = ref('')
 const description = ref('')
-const imageFile = ref(null)
 const imageURL = ref('')
+const previewURL = ref('')
 const error = ref(null)
 const submitting = ref(false)
 
+let objectURLToRevoke = null
+
+const onBack = () => {
+    emit('back')
+}
 
 const handleFile = async (event) => {
-    const file = event.target.files[0]
+    error.value = null
+    const file = event.target.files?.[0]
     if (!file) {
         return
     }
+
+    if (objectURLToRevoke) {
+        URL.revokeObjectURL(objectURLToRevoke)
+    }
+    objectURLToRevoke = URL.createObjectURL(file)
+    previewURL.value = objectURLToRevoke
 
     const formData = new FormData()
     formData.append('queue_id', props.queueId)
     formData.append('image', file)
 
     try {
-        await apiClient.post('/upload_image/', formData, {
+        const { data } = await apiClient.post('/upload_image/', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             }
         })
+        imageURL.value = data.image_url
     } catch (err) {
         error.value = 'Failed to upload image. Try again later.'
-        console.log(err)
+        // console.log(err)
     }
 }
 
@@ -102,7 +114,7 @@ const submitForm = async() => {
     }
 
     try {
-        const res = await apiClient.patch(`/queue/${props.queueId}/update/`, {
+        await apiClient.patch(`/queue/${props.queueId}/update/`, {
             name: name.value,
             description: description.value,
             image_url: imageURL.value
@@ -114,5 +126,11 @@ const submitForm = async() => {
         submitting.value = false
     }
 }
+
+onBeforeUnmount(() => {
+    if (objectURLToRevoke) {
+        URL.revokeObjectURL(objectURLToRevoke)
+    }
+})
 
 </script>

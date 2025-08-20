@@ -17,7 +17,7 @@
 
         <div>
             <button @click="startExport" class="bg-green-600 text-white px-6 py-3 rounded" :disabled="loading">
-                Continue to Preview
+                {{ loading ? 'Working…' : 'Continue to Preview' }}
             </button>
             <p v-if="error" class="text-red-600 mt-2">{{ error }}</p>
         </div>
@@ -31,7 +31,7 @@ import apiClient from '../api';
 
 
 const emit = defineEmits(['next']);
-const loading = ref(null);
+const loading = ref(false);
 const playbackError = ref(null);
 const error = ref(null);
 
