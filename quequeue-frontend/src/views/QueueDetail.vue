@@ -130,7 +130,7 @@ const fetchQueue = async () => {
 
 const restoreQueue = async () => {
     try {
-        const res = await apiClient.get(`/restore_queue/${queueId}/`)
+        const res = await apiClient.get(`/queue/${queueId}/restore/`)
         alert(res.data.message)
     } catch(err) {
         alert("Restore failed: " + err.response?.data?.error || err.message)
@@ -171,7 +171,7 @@ const confirmDeleteQueue = async () => {
 
 const checkSuggestions = async () => {
     try {
-        const res = await apiClient.get(`/suggest_available/${queueId}/`);
+        const res = await apiClient.get(`/queue/${queueId}/suggest_available/`);
         suggestAvailable.value = res.data.available;
     } catch(err) {
         console.error(err);
@@ -182,7 +182,7 @@ const openSuggestModal = async () => {
     showSuggestModal.value = true;
     loadingSuggestions.value = true;
     try {
-        const res = await apiClient.get(`/suggest/${queueId}/`);
+        const res = await apiClient.get(`/queue/${queueId}/suggest/`);
         suggestions.value = res.data.suggestions;
     } catch(err) {
         console.error(err);
@@ -195,13 +195,28 @@ const openSuggestModal = async () => {
 const addSuggestedTrack = async (track) => {
     try {
         await apiClient.post(`/queue/${queueId}/add_track/`, {
-        track_uri: track.track_uri
+            track_uri: track.track_uri
         });
+
+        // Map to TrackList format
+        const newTrack = {
+            id: track.track_uri, // use track_uri as a temporary unique key
+            track_uri: track.track_uri,
+            track_name: track.track_name,
+            artist_name: track.artist_name,
+            album_image_url: track.album_image_url,
+            position: queue.value.tracks.length // add position for display
+        };
+
+        // Add to queue tracks
+        queue.value.tracks.push(newTrack);
+
         alert(`${track.track_name} added!`);
     } catch(err) {
         alert("Failed to add track: " + err.response?.data?.error || err.message);
     }
-}
+};
+
 
 
 onMounted(fetchQueue);

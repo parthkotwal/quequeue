@@ -322,6 +322,71 @@ def delete_queue(request, queue_id):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+def add_track_to_queue(request, queue_id:int):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    try:
+        data = json.loads(request.body)
+        track_uri = data["track_uri"]
+        track_name = data.get("track_name", "")
+        artist_name = data.get("artist_name", "")
+        album_image_url = data.get("album_image_url", "")
+    except (json.JSONDecodeError, KeyError):
+        return JsonResponse({"error": "Missing or invalid track data"}, status=400)
+
+    queue = get_object_or_404(Queue, id=queue_id, user_id=user_id)
+    
+    # Determine next position
+    last_track = queue.tracks.order_by("-position").first()
+    next_position = (last_track.position + 1) if last_track else 0
+
+    track = Track.objects.create(
+        queue=queue,
+        track_uri=track_uri,
+        track_name=track_name,
+        artist_name=artist_name,
+        album_image_url=album_image_url,
+        position=next_position
+    )
+
+    return JsonResponse({
+        "message": "Track added",
+        "track": {
+            "id": track.id,
+            "track_uri": track.track_uri,
+            "track_name": track.track_name,
+            "artist_name": track.artist_name,
+            "album_image_url": track.album_image_url,
+            "position": track.position
+        }
+    })
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def remove_track_from_queue(request, queue_id:int, track_id:int):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    queue = get_object_or_404(Queue, id=queue_id, user_id=user_id)
+    track = get_object_or_404(Track, id=track_id, queue=queue)
+
+    track.delete()
+
+    # Reorder remaining tracks
+    for idx, t in enumerate(queue.tracks.order_by("position")):
+        if t.position != idx:
+            t.position = idx
+            t.save()
+
+    return JsonResponse({"message": "Track removed successfully"})
+
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
 def play_track(request):
     user_id = request.session.get("user_id")
     if not user_id:
