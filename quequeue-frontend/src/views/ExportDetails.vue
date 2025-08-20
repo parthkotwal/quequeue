@@ -102,23 +102,17 @@ const submitForm = async() => {
     }
 
     try {
-  const res = await apiClient.patch(`/queue/${props.queueId}/update/`, {
-    name: name.value,
-    description: description.value,
-    image_url: imageURL.value
-  })        
-  console.log("PATCH success:", res.data) // ✅ confirm JSON
-  emit('done')
-} catch (err) {
-  if (err.response) {
-    console.error("PATCH failed:", err.response.status, err.response.data)
-  } else {
-    console.error("PATCH error:", err.message)
-  }
-  error.value = 'Failed to export queue.'
-} finally {
-  submitting.value = false
-}
+        const res = await apiClient.patch(`/queue/${props.queueId}/update/`, {
+            name: name.value,
+            description: description.value,
+            image_url: imageURL.value
+        })        
+        emit('done')
+    } catch (err) {
+        error.value = 'Failed to export queue.'
+    } finally {
+        submitting.value = false
+    }
 }
 
 </script>

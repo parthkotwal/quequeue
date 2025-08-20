@@ -15,12 +15,13 @@ urlpatterns = [
     # EXPORT
     path('export_queue/', views.export_queue, name="export_queue"),
     path('cancel_export/', views.cancel_export),
+    path("upload_image/", views.upload_image, name="upload_image"),
 
     # QUEUE FUNCTIONS
     path('queue/<int:queue_id>/get/', views.get_queue, name="get_queue"),
     path('queue/<int:queue_id>/update/', views.update_queue, name="update_queue"),
     path('queue/<int:queue_id>/delete/', views.delete_queue, name="delete_queue"),
-    path("upload_image/", views.upload_image, name="upload_image"),
+    
 
     # RESTORE QUEUE
     path('restore_queue/<int:queue_id>/', views.restore_queue),
@@ -28,6 +29,8 @@ urlpatterns = [
     # ALL QUEUES
     path('my_queues/', views.my_queues, name="my_queues"),
     
+    
     # SMART SUGGESTION
-    path('suggest/<int:queue_id>/', views.smart_suggestions, name='smart_suggestions'),
+    path('suggest/<int:queue_id>/', views.suggest),
+    path('suggest_available/<int:queue_id>/', views.suggest_available),
 ]

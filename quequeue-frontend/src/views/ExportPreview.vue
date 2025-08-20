@@ -19,7 +19,7 @@
             <TrackList :tracks="queue.tracks" />
 
             <div class="flex justify-between mt-6">
-                <button class="bg-gray-400 text-white px-4 py-2 rounded" @click="cancel" :disabled="loading">Cancel</button>
+                <button class="bg-gray-400 text-white px-4 py-2 rounded" @click="cancel" :disabled="loading">Back</button>
                 
                 <button class="bg-green-600 text-white px-6 py-2 rounded" @click="confirm" :disabled="loading">Looks Good!</button>
             </div>

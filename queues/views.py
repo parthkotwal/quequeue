@@ -198,6 +198,10 @@ def cancel_export(request):
     if not queue:
         return JsonResponse({"error": "Queue not found"}, status=404)
 
+    if queue.image_url:
+        key = queue.image_url.split(".amazonaws.com/")[1]
+        settings.S3.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=key)
+
     queue.delete()
     return JsonResponse({"message": "Export canceled, queue deleted"})
 
@@ -233,42 +237,6 @@ def upload_image(request):
     
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def play_track(request):
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return JsonResponse({"error": "Not authenticated"}, status=401)
-
-    user = get_object_or_404(User, id=user_id)
-    client = SpotifyClient(user)
-    
-    response = client.put("me/player/play")
-    
-    if response.status_code == 204:
-        return JsonResponse({"message": "Playback started"})
-    else:
-        return JsonResponse({"error": "Failed to start playback"}, status=response.status_code)
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def pause_track(request):
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return JsonResponse({"error": "Not authenticated"}, status=401)
-
-    user = get_object_or_404(User, id=user_id)
-    client = SpotifyClient(user)
-
-    response = client.put("me/player/pause")
-
-    if response.status_code == 204:
-        return JsonResponse({"message": "Playback paused"})
-    else:
-        return JsonResponse({"error": "Failed to pause playback"}, status=response.status_code)
-
 
 @csrf_exempt
 @require_http_methods(['GET'])
@@ -343,9 +311,49 @@ def delete_queue(request, queue_id):
     
     user = get_object_or_404(User, id=user_id)
     queue = get_object_or_404(Queue, id=queue_id, user=user)
+
+    if queue.image_url:
+        key = queue.image_url.split(".amazonaws.com/")[1]
+        settings.S3.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=key)
+
     queue.delete()
     
     return JsonResponse({"message": "Queue deleted"})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def play_track(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    user = get_object_or_404(User, id=user_id)
+    client = SpotifyClient(user)
+    
+    response = client.put("me/player/play")
+    
+    if response.status_code == 204:
+        return JsonResponse({"message": "Playback started"})
+    else:
+        return JsonResponse({"error": "Failed to start playback"}, status=response.status_code)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def pause_track(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    user = get_object_or_404(User, id=user_id)
+    client = SpotifyClient(user)
+
+    response = client.put("me/player/pause")
+
+    if response.status_code == 204:
+        return JsonResponse({"message": "Playback paused"})
+    else:
+        return JsonResponse({"error": "Failed to pause playback"}, status=response.status_code)
 
 
 
@@ -428,7 +436,7 @@ def uri_to_id(uri):
 
 @csrf_exempt
 @require_http_methods(['GET'])
-def smart_suggestions(request, queue_id:int):
+def suggest(request, queue_id:int):
     # extract queue tracks
     # match track names to any in dataset
     # average their features into a feature vector
@@ -533,3 +541,23 @@ def smart_suggestions(request, queue_id:int):
 
     # USE FUZZY MATCHING DUE TO EXPLICIT VS NOT EXPLICIT
     # ALSO IMPROVE BY ARTIST MATCHING BY ASKING NEW CHAT
+
+@csrf_exempt
+@require_http_methods(['GET'])
+def suggest_available(request, queue_id:int):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not logged in"}, status=401)
+
+    user = get_object_or_404(User, id=user_id)
+    queue = get_object_or_404(Queue, id=queue_id, user=user)
+
+    uris = list(queue.tracks.order_by('position').values_list('track_uri', flat=True))
+    feature_rows = get_feature_rows(uris)
+    
+    if len(feature_rows) < 2:
+        return JsonResponse({"available": False})
+    else:
+        cache_key = f'smart_sugg_u{user.id}_q{queue.id}'
+        cached = cache.get(cache_key)
+        return JsonResponse({"available": True if cached or len(feature_rows) >= 2 else False})
