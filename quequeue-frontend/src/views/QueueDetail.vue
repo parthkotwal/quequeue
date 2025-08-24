@@ -26,7 +26,7 @@
             <!-- Header content: Image + Info -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 items-start mb-8">
                 <!-- Queue Cover -->
-                <img :src="queue.image_url" class="w-full h-48 sm:h-56 object-cover rounded shadow-md" alt="Queue Cover" />
+                <img :src="queue.image_url" class="w-full h-full object-cover rounded shadow-md" alt="Queue Cover" />
 
                 <!-- Queue Info -->
                 <div class="sm:col-span-2 flex flex-col justify-between">

@@ -1,11 +1,14 @@
 <template>
-    <div class="login-page">
-        <h1>Que Queue</h1>
-        <p>Save and restore your Spotify queue.</p>
-        <button @click="connectSpotify">
-            Login with Spotify
-        </button>
-    </div>
+  <div class="login-page min-h-screen flex flex-col justify-center items-center bg-primary text-white px-4">
+    <h1 class="text-4xl font-orbitron mb-2">Que Queue</h1>
+    <p class="text-secondaryText mb-8 text-center">Save and restore your Spotify queue.</p>
+    <button 
+      @click="connectSpotify"
+      class="bg-accent hover:bg-accentLight text-black font-orbitron px-6 py-3 rounded-lg transition-colors duration-200"
+    >
+      Login with Spotify
+    </button>
+  </div>
 </template>
 
 <script setup>
@@ -17,17 +20,4 @@ function connectSpotify() {
 </script>
 
 <style scoped>
-.login-page {
-  max-width: 320px;
-  margin: 4rem auto;
-  text-align: center;
-}
-button {
-  margin-top: 2rem;
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-}
 </style>

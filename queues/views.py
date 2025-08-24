@@ -21,6 +21,8 @@ import numpy as np
 import sklearn.preprocessing
 import sklearn.cluster
 from sklearn.metrics.pairwise import cosine_similarity
+from PIL import Image
+from io import BytesIO
 
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
@@ -217,13 +219,30 @@ def upload_image(request):
 
     if not queue_id or not image_file:
         return JsonResponse({"error": "Missing queue_id or image"}, status=400)
-    
+
     filename = f"queue_covers/{uuid.uuid4()}_{image_file.name}"
-    content_type = image_file.content_type or mimetypes.guess_type(image_file.name)[0] or "image/jpeg"
+    content_type = "image/jpeg"
 
     try:
+        img = Image.open(image_file).convert("RGB")
+
+        width, height = img.size
+        min_dim = min(width, height)
+        left = (width - min_dim) // 2
+        top = (height - min_dim) // 2
+        right = left + min_dim
+        bottom = top + min_dim
+        img = img.crop((left, top, right, bottom))
+
+        target_size = (512, 512)
+        img = img.resize(target_size, Image.Resampling.LANCZOS)
+
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG", quality=90)
+        buffer.seek(0)
+
         settings.S3.upload_fileobj(
-            image_file,
+            buffer,
             settings.AWS_STORAGE_BUCKET_NAME,
             filename,
             ExtraArgs={
