@@ -1,6 +1,6 @@
 <template>
-  <router-view />
-  <div id="app">
+  <div class="min-h-screen bg-primary text-white">
+    <router-view />
   </div>
 </template>
 
@@ -10,10 +10,5 @@ export default {
 }
 </script>
 
-<style scoped>
-#app {
-  font-family: Avenir, sans-serif;
-  text-align: center;
-  padding: 2rem;
-}
+<style>
 </style>

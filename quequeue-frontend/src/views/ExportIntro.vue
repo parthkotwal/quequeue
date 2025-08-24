@@ -1,6 +1,6 @@
 <template>
     <div class="space-y-6">
-      <h2 class="text-2xl font-orbitron mb-2">Export Your Current Spotify Queue</h2>
+      <h2 class="text-2xl font-silkscreen mb-2">Export Your Current Spotify Queue</h2>
       <p class="text-secondaryText mb-4">
         We'll grab and save the currently playing track and the next songs in your queue.
       </p>
@@ -11,7 +11,7 @@
         </p>
         <button 
           @click="tryPlayback" 
-          class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-orbitron transition-colors duration-200" 
+          class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-silkscreen transition-colors duration-200" 
           :disabled="loading"
         >
           ▶ Play for 1s
@@ -22,7 +22,7 @@
       <div class="mt-4">
         <button 
           @click="startExport" 
-          class="bg-accent hover:bg-accentLight text-black px-6 py-3 rounded font-orbitron transition-colors duration-200" 
+          class="bg-accent hover:bg-accentLight text-black px-6 py-3 rounded font-silkscreen transition-colors duration-200" 
           :disabled="loading"
         >
           {{ loading ? 'Working…' : 'Continue to Preview' }}

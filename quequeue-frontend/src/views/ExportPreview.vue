@@ -6,7 +6,7 @@
 
 <template>
     <div class="space-y-6">
-      <h2 class="text-2xl font-orbitron mb-2">Preview Your Queue</h2>
+      <h2 class="text-2xl font-silkscreen mb-2">Preview Your Queue</h2>
   
       <div v-if="loading" class="text-secondaryText">Loading your queue...</div>
       <div v-else-if="error" class="text-red-600">{{ error }}</div>
@@ -27,7 +27,7 @@
           </div>
   
           <button
-            class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-orbitron transition-colors duration-200"
+            class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-silkscreen transition-colors duration-200"
             @click="refreshSnapshot"
             :disabled="loading"
           >
@@ -38,7 +38,7 @@
         <!-- Navigation Buttons -->
         <div class="flex justify-between mt-6">
           <button
-            class="bg-divider text-secondaryText px-4 py-2 rounded font-orbitron hover:bg-accentLight transition-colors duration-200"
+            class="bg-divider text-secondaryText px-4 py-2 rounded font-silkscreen hover:bg-accentLight transition-colors duration-200"
             @click="emit('cancel', { queueId: props.queueId })"
             :disabled="loading"
           >
@@ -46,7 +46,7 @@
           </button>
       
           <button
-            class="bg-accent hover:bg-accentLight text-black px-6 py-2 rounded font-orbitron transition-colors duration-200"
+            class="bg-accent hover:bg-accentLight text-black px-6 py-2 rounded font-silkscreen transition-colors duration-200"
             @click="confirm"
             :disabled="loading"
           >

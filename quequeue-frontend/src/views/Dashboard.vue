@@ -2,7 +2,7 @@
     <div class="dashboard-page min-h-screen bg-primary text-white px-6 py-8">
         <div class="max-w-4xl mx-auto">
             <!-- Welcome Header -->
-            <h1 class="text-3xl md:text-4xl font-orbitron mb-6">
+            <h1 class="text-3xl md:text-4xl font-silkscreen mb-6">
             Welcome, {{ session.user?.name || 'User' }}
             </h1>
     
@@ -10,13 +10,13 @@
             <div class="mb-8 flex flex-wrap gap-4">
                 <button 
                     @click="fetchQueues" 
-                    class="bg-accent hover:bg-accentLight text-black font-orbitron px-5 py-2 rounded-lg transition-colors duration-200"
+                    class="bg-accent hover:bg-accentLight text-black font-silkscreen px-5 py-2 rounded-lg transition-colors duration-200"
                 >
                     Refresh Queues
                 </button>
                 <button 
                     @click="goToExport" 
-                    class="bg-accent hover:bg-accentLight text-black font-orbitron px-5 py-2 rounded-lg transition-colors duration-200"
+                    class="bg-accent hover:bg-accentLight text-black font-silkscreen px-5 py-2 rounded-lg transition-colors duration-200"
                 >
                     Export Current Queue
                 </button>
@@ -36,8 +36,9 @@
                     v-for="queue in queues"
                     :key="queue.id"
                     :queue="queue"
-                    @click="goToQueue(queue.id)"
+                    @deleted="removeQueue"
                 />
+
             </div>
 
         </div>
@@ -76,6 +77,10 @@ const goToQueue = (id) => {
 
 const goToExport = () => {
     router.push('/export')
+}
+
+const removeQueue = (id) => {
+  queues.value = queues.value.filter(q => q.id !== id)
 }
 
 onMounted(fetchQueues)

@@ -9,11 +9,11 @@
 
 <template>
     <div class="space-y-6">
-      <h2 class="text-2xl font-orbitron mb-4">Queue Details</h2>
+      <h2 class="text-2xl font-silkscreen mb-4">Queue Details</h2>
       <form @submit.prevent="submitForm" class="space-y-4">
         <!-- Queue Name -->
         <div>
-          <label class="block font-orbitron text-secondaryText mb-1">Queue Name *</label>
+          <label class="block font-silkscreen text-secondaryText mb-1">Queue Name *</label>
           <input 
             class="border divider px-3 py-2 rounded w-full bg-primary text-white focus:outline-none focus:ring-2 focus:ring-accent" 
             v-model="name" 
@@ -24,7 +24,7 @@
   
         <!-- Queue Description -->
         <div>
-          <label class="block font-orbitron text-secondaryText mb-1">Queue Description</label>
+          <label class="block font-silkscreen text-secondaryText mb-1">Queue Description</label>
           <textarea 
             v-model="description" 
             rows="3" 
@@ -34,7 +34,7 @@
   
         <!-- Cover Image -->
         <div>
-          <label class="block font-orbitron text-secondaryText mb-1">Cover Image *</label>
+          <label class="block font-silkscreen text-secondaryText mb-1">Cover Image *</label>
           <input type="file" @change="handleFile" accept="image/*" class="text-secondaryText">
           <div v-if="imageURL" class="mt-2">
             <img :src="imageURL" alt="Cover Preview" class="w-40 h-40 object-cover rounded shadow">
@@ -50,7 +50,7 @@
         <div class="flex justify-between mt-6">
           <button 
             type="button" 
-            class="bg-divider text-secondaryText px-4 py-2 rounded font-orbitron hover:bg-accentLight transition-colors duration-200" 
+            class="bg-divider text-secondaryText px-4 py-2 rounded font-silkscreen hover:bg-accentLight transition-colors duration-200" 
             @click="onBack" 
             :disabled="submitting"
           >
@@ -59,7 +59,7 @@
   
           <button 
             type="submit" 
-            class="bg-accent hover:bg-accentLight text-black px-6 py-2 rounded font-orbitron transition-colors duration-200" 
+            class="bg-accent hover:bg-accentLight text-black px-6 py-2 rounded font-silkscreen transition-colors duration-200" 
             :disabled="submitting || !name"
           >
             Export

@@ -14,8 +14,8 @@ export default {
         divider: '#2C2C2C',       
       },
       fontFamily: {
-        orbitron: ['Silkscreen', 'sans-serif'], 
-        roboto: ['Inconsolata', 'sans-serif'],      
+        silkscreen: ['Silkscreen', 'sans-serif'], 
+        inconsolata: ['Inconsolata', 'sans-serif'],      
       },
     },
   },

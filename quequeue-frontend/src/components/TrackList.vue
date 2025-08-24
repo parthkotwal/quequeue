@@ -19,7 +19,7 @@
     
             <!-- Track Info -->
             <div class="flex-1 min-w-0">
-            <p class="text-base font-orbitron text-white truncate">
+            <p class="text-base font-silkscreen text-white truncate">
                 {{ track.track_name }}
             </p>
             <p class="text-sm text-secondaryText truncate">
