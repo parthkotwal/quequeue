@@ -1,27 +1,45 @@
 <template>
-    <div class="p-6 max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold mb-4">Welcome, {{ session.user?.name || 'User' }}</h1>
+    <div class="dashboard-page min-h-screen bg-primary text-white px-6 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Welcome Header -->
+            <h1 class="text-3xl md:text-4xl font-orbitron mb-6">
+            Welcome, {{ session.user?.name || 'User' }}
+            </h1>
+    
+            <!-- Action Buttons -->
+            <div class="mb-8 flex flex-wrap gap-4">
+                <button 
+                    @click="fetchQueues" 
+                    class="bg-accent hover:bg-accentLight text-black font-orbitron px-5 py-2 rounded-lg transition-colors duration-200"
+                >
+                    Refresh Queues
+                </button>
+                <button 
+                    @click="goToExport" 
+                    class="bg-accent hover:bg-accentLight text-black font-orbitron px-5 py-2 rounded-lg transition-colors duration-200"
+                >
+                    Export Current Queue
+                </button>
+            </div>
+    
+            <!-- Loading / Empty State -->
+            <div class="text-secondaryText mb-6" v-if="loading">
+                Loading queues...
+            </div>
+            <div class="text-secondaryText mb-6" v-else-if="queues && queues.length === 0">
+                No queues yet. Try exporting one.
+            </div>
+    
+            <!-- Queue Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-else>
+                <QueueCard 
+                    v-for="queue in queues"
+                    :key="queue.id"
+                    :queue="queue"
+                    @click="goToQueue(queue.id)"
+                />
+            </div>
 
-        <div class="mb-6 flex gap-4">
-            <button @click="fetchQueues" class="bg-green-600 text-white px-4 py-2 rounded">Refresh Queues</button>
-            <button @click="goToExport" class="bg-blue-600 text-white px-4 py-2 rounded">Export Current Queue</button>
-        </div>
-
-        <div v-if="loading">
-            Loading queues...
-        </div>
-
-        <div v-else-if="queues && queues.length === 0">
-            No queues yet. Try exporting one.
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" v-else>
-            <QueueCard 
-                v-for="queue in queues"
-                :key="queue.id"
-                :queue="queue"
-                @click="goToQueue(queue.id)"
-            />
         </div>
     </div>
 </template>

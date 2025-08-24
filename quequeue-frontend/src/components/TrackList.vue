@@ -3,11 +3,11 @@
         <div
             v-for="(track, index) in tracks"
             :key="track.id"
-            class="flex items-center gap-4 py-3 px-4 bg-white rounded-xl shadow-sm hover:shadow-md transition relative"
+            class="flex items-center gap-4 py-3 px-4 bg-divider rounded-xl shadow-sm hover:shadow-md transition relative"
         >
             <!-- Position Number -->
-            <div class="w-6 text-right text-gray-500 font-medium">
-                {{ index + 1 }}
+            <div class="w-6 text-right text-secondaryText font-medium">
+            {{ index + 1 }}
             </div>
     
             <!-- Album Cover -->
@@ -19,50 +19,48 @@
     
             <!-- Track Info -->
             <div class="flex-1 min-w-0">
-                <p class="text-base font-semibold text-gray-900 truncate">
-                    {{ track.track_name }}
-                </p>
-                <p class="text-sm text-gray-500 truncate">
-                    {{ track.artist_name }}
-                </p>
+            <p class="text-base font-orbitron text-white truncate">
+                {{ track.track_name }}
+            </p>
+            <p class="text-sm text-secondaryText truncate">
+                {{ track.artist_name }}
+            </p>
             </div>
     
             <!-- Three Dot Menu -->
             <div class="relative">
-                <button
-                    @click="toggleMenu(track.id)"
-                    class="text-gray-400 hover:text-gray-600 transition"
+            <button
+                @click="toggleMenu(track.id)"
+                class="text-secondaryText hover:text-accent transition"
+            >
+                <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
                 >
-                    <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    >
-                    <circle cx="4" cy="10" r="2" />
-                    <circle cx="10" cy="10" r="2" />
-                    <circle cx="16" cy="10" r="2" />
-                    </svg>
-                </button>
+                <circle cx="4" cy="10" r="2" />
+                <circle cx="10" cy="10" r="2" />
+                <circle cx="16" cy="10" r="2" />
+                </svg>
+            </button>
     
-                <!-- Dropdown -->
-                <div
-                    v-if="openMenu === track.id"
-                    class="absolute right-0 mt-2 w-32 bg-white border rounded-md shadow-lg z-10"
+            <!-- Dropdown -->
+            <div
+                v-if="openMenu === track.id"
+                class="absolute right-0 mt-2 w-32 bg-primary border divider rounded-md shadow-lg z-10"
+            >
+                <button
+                @click="removeTrack(track)"
+                class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-divider rounded"
                 >
-                    <button
-                    @click="removeTrack(track)"
-                    class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                    Remove
-                    </button>
-                </div>
+                Remove
+                </button>
             </div>
-
+            </div>
         </div>
-
     </div>
-  </template>
+</template>
   
 <script setup>
 import { ref } from 'vue'

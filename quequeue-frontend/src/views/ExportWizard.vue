@@ -1,5 +1,5 @@
 <template>
-    <div class="max-w-3xl mx-auto p-6">
+    <div class="max-w-3xl mx-auto p-6 bg-primary text-white rounded-lg shadow-md">
         <component 
             :is="currentComponent"
             :queue-id="queueId"

@@ -1,129 +1,143 @@
 <template>
-    <div class="p-6 max-w-4xl mx-auto">
-        <div v-if="loading">Loading queue...</div>
+    <div class="queue-detail-page min-h-screen bg-primary text-white px-6 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Loading State -->
+            <div v-if="loading" class="text-secondaryText">Loading queue...</div>
     
-        <div v-else>
-            <!-- Top bar: Back + Actions -->
-            <div class="flex justify-between items-center mb-6">
-                <button @click="router.push('/dashboard')" 
-                        class="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300">
+            <div v-else>
+            <!-- Top Bar: Back + Actions -->
+            <div class="flex justify-between items-center mb-6 flex-wrap gap-2">
+                <button 
+                @click="router.push('/dashboard')" 
+                class="bg-divider text-white px-3 py-1 rounded hover:bg-accentLight transition-colors font-orbitron"
+                >
                 ← Back
                 </button>
-
+    
                 <div class="flex flex-wrap gap-2">
-                <button :disabled="!suggestAvailable || loadingSuggestions" 
-                        @click="openSuggestModal" 
-                        :class="suggestAvailable ? 'bg-green-500' : 'bg-gray-300 cursor-not-allowed'" 
-                        class="px-4 py-2 rounded text-white">
+                <button 
+                    :disabled="!suggestAvailable || loadingSuggestions" 
+                    @click="openSuggestModal" 
+                    :class="suggestAvailable ? 'bg-accent hover:bg-accentLight' : 'bg-divider cursor-not-allowed'" 
+                    class="px-4 py-2 rounded text-black font-orbitron transition-colors duration-200"
+                >
                     Suggest
                 </button>
                 
-                <button @click="showEditModal = true" class="bg-yellow-500 text-white px-4 py-2 rounded">Edit</button>
-                <button @click="deleteQueue" class="bg-red-600 text-white px-4 py-2 rounded">Delete</button>
+                <button 
+                    @click="showEditModal = true" 
+                    class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-orbitron transition-colors duration-200"
+                >
+                    Edit
+                </button>
+                
+                <button 
+                    @click="deleteQueue" 
+                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-orbitron transition-colors duration-200"
+                >
+                    Delete
+                </button>
                 </div>
             </div>
-
-            <!-- Header content: Image + Info -->
+    
+            <!-- Header Content: Image + Info -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 items-start mb-8">
-                <!-- Queue Cover -->
                 <img :src="queue.image_url" class="w-full h-full object-cover rounded shadow-md" alt="Queue Cover" />
-
-                <!-- Queue Info -->
+    
                 <div class="sm:col-span-2 flex flex-col justify-between">
-                    <h1 class="text-3xl font-bold mb-2 truncate">{{ queue.name }}</h1>
-
-                    <!-- Description with hover preview -->
-                    <div class="relative group max-w-lg">
-                        <p class="text-gray-700 text-sm sm:text-base line-clamp-3 overflow-hidden">
-                            {{ queue.description }}
-                        </p>
-                    </div>
-                    
+                <h1 class="text-3xl font-orbitron mb-2 truncate">{{ queue.name }}</h1>
+    
+                <div class="relative group max-w-lg">
+                    <p class="text-secondaryText text-sm sm:text-base line-clamp-3 overflow-hidden">
+                    {{ queue.description }}
+                    </p>
                 </div>
-
-                <!-- Restore button -->
-                <div class="mt-4">
-                    <button 
-                        @click="restoreQueue" 
-                        :disabled="restoring" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded w-full sm:w-auto"
-                    >
-                        <svg v-if="restoring" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                        </svg>
-                        <span>{{ restoring ? 'Restoring...' : 'Restore to Spotify' }}</span>
-                    </button>
+                </div>
+    
+                <!-- Restore Button -->
+                <div class="mt-4 sm:mt-0">
+                <button 
+                    @click="restoreQueue" 
+                    :disabled="restoring" 
+                    class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded w-full sm:w-auto font-orbitron flex items-center justify-center gap-2 transition-colors duration-200"
+                >
+                    <svg v-if="restoring" class="animate-spin h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    <span>{{ restoring ? 'Restoring...' : 'Restore to Spotify' }}</span>
+                </button>
                 </div>
             </div>
-
+    
             <!-- Tracks -->
             <div v-if="queue.tracks.length">
-                <h2 class="text-xl font-semibold mb-2">Tracks</h2>
+                <h2 class="text-xl font-orbitron mb-2">Tracks</h2>
                 <TrackList :tracks="queue.tracks" :queue-id="queue.id" @trackRemoved="handleTrackRemoved"/>
             </div>
-        </div>
-
-
-
-        <!-- Edit Modal -->
-        <div v-if="showEditModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div class="bg-white p-6 rounded w-full max-w-md">
-                <h3 class="text-xl font-bold mb-4">Edit Queue</h3>
-                <label class="block mb-2 text-black">
-                    Name
-                    <input v-model="editForm.name" class="w-full border px-2 py-1 rounded" />
+            </div>
+    
+            <!-- Modals -->
+            <!-- Edit Modal -->
+            <div v-if="showEditModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-primary p-6 rounded w-full max-w-md text-white">
+                <h3 class="text-xl font-orbitron mb-4">Edit Queue</h3>
+                <label class="block mb-2 text-secondaryText">
+                Name
+                <input v-model="editForm.name" class="w-full border divider px-2 py-1 rounded bg-primary text-white" />
                 </label>
-                <label class="block mb-4 text-black">
-                    Description
-                    <textarea v-model="editForm.description" class="w-full border px-2 py-1 rounded"></textarea>
+                <label class="block mb-4 text-secondaryText">
+                Description
+                <textarea v-model="editForm.description" class="w-full border divider px-2 py-1 rounded bg-primary text-white"></textarea>
                 </label>
                 <div class="flex justify-end space-x-2">
-                    <button @click="showEditModal = false" class="px-4 py-2 rounded border">Cancel</button>
-                    <button @click="updateQueue" class="bg-green-600 text-white px-4 py-2 rounded">Save</button>
+                <button @click="showEditModal = false" class="px-4 py-2 rounded border border-divider">Cancel</button>
+                <button @click="updateQueue" class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-orbitron transition-colors duration-200">Save</button>
                 </div>
             </div>
-        </div>
-
-        <!-- Delete Modal -->
-        <div v-if="showDeleteModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <div class="bg-white p-6 rounded w-full max-w-md">
-                <h3 class="text-xl font-bold mb-4 text-red-600">Confirm Delete</h3>
+            </div>
+    
+            <!-- Delete Modal -->
+            <div v-if="showDeleteModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-primary p-6 rounded w-full max-w-md text-white">
+                <h3 class="text-xl font-orbitron mb-4 text-red-600">Confirm Delete</h3>
                 <p class="mb-4 text-red-600">Are you sure you want to permanently delete this queue?</p>
                 <div class="flex justify-end space-x-2">
-                    <button @click="showDeleteModal = false" class="px-4 py-2 rounded border">Cancel</button>
-                    <button @click="confirmDeleteQueue" class="bg-red-600 text-white px-4 py-2 rounded">Delete</button>
+                <button @click="showDeleteModal = false" class="px-4 py-2 rounded border border-divider">Cancel</button>
+                <button @click="confirmDeleteQueue" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-orbitron transition-colors duration-200">Delete</button>
                 </div>
             </div>
-        </div>
-
-        <div v-if="showSuggestModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 text-black">
-            <div class="bg-white p-6 rounded w-full max-w-md">
-                <h3 class="text-xl font-bold mb-4">Suggested Tracks</h3>
-                <div v-if="loadingSuggestions">Loading suggestions...</div>
+            </div>
+    
+            <!-- Suggest Modal -->
+            <div v-if="showSuggestModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-primary p-6 rounded w-full max-w-md text-white">
+                <h3 class="text-xl font-orbitron mb-4">Suggested Tracks</h3>
+                <div v-if="loadingSuggestions" class="text-secondaryText">Loading suggestions...</div>
                 <div v-else>
-                    <div v-if="suggestions.length === 0">No suggestions available</div>
-                    <div v-for="track in suggestions" :key="track.track_uri" class="flex justify-between items-center mb-2">
-                        <div class="flex items-center space-x-2">
-                            <img :src="track.album_image_url" class="w-12 h-12 object-cover rounded" />
-                            <div>
-                                <p class="font-semibold">{{ track.track_name }}</p>
-                                <p class="text-sm text-gray-600">{{ track.artist_name }}</p>
-                            </div>
-                        </div>
-                        <button v-if="!queueTrackUris.has(track.track_uri)" @click="addSuggestedTrack(track)" class="bg-blue-500 text-white px-3 py-1 rounded">Add</button>
-                        <span v-else class="bg-gray-300 text-gray-600 px-3 py-1 rounded cursor-not-allowed">Added</span>
+                <div v-if="suggestions.length === 0" class="text-secondaryText">No suggestions available</div>
+                <div v-for="track in suggestions" :key="track.track_uri" class="flex justify-between items-center mb-2">
+                    <div class="flex items-center space-x-2">
+                    <img :src="track.album_image_url" class="w-12 h-12 object-cover rounded" />
+                    <div>
+                        <p class="font-orbitron">{{ track.track_name }}</p>
+                        <p class="text-secondaryText text-sm">{{ track.artist_name }}</p>
                     </div>
+                    </div>
+                    <button v-if="!queueTrackUris.has(track.track_uri)" @click="addSuggestedTrack(track)" class="bg-accent hover:bg-accentLight text-black px-3 py-1 rounded font-orbitron transition-colors duration-200">Add</button>
+                    <span v-else class="bg-divider text-secondaryText px-3 py-1 rounded cursor-not-allowed">Added</span>
+                </div>
                 </div>
                 <div class="flex justify-end mt-4">
-                    <button @click="showSuggestModal = false" class="px-4 py-2 border rounded text-white">Close</button>
+                    <button @click="showSuggestModal = false" class="px-4 py-2 border border-divider rounded font-orbitron">Close</button>
                 </div>
             </div>
+            </div>
+    
         </div>
-
-
     </div>
 </template>
+  
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';

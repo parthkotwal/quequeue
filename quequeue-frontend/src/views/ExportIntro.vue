@@ -1,29 +1,37 @@
 <template>
     <div class="space-y-6">
-        <h2 class="text-2xl font-bold">Export Your Current Spotify Queue</h2>
-        <p>
-            We'll grab and save the currently playing track and the next songs in your queue. 
+      <h2 class="text-2xl font-orbitron mb-2">Export Your Current Spotify Queue</h2>
+      <p class="text-secondaryText mb-4">
+        We'll grab and save the currently playing track and the next songs in your queue.
+      </p>
+  
+      <div class="bg-divider p-4 rounded">
+        <p class="mb-2 text-secondaryText">
+          For this to work, Spotify requires a playback device to be active. If nothing is playing, click below to nudge it:
         </p>
-
-        <div class="bg-gray-100 p-4 rounded">
-            <p class="mb-2 text-black">
-                For this to work, Spotify requires a playback device to be active. If nothing is playing, click below to nudge it (you need to still have played something recently):
-            </p>
-            <button @click="tryPlayback" class="bg-blue-600 text-white px-4 py-2 rounded" :disabled="loading">
-                ▶ Play for 1s
-            </button>
-            <p v-if="playbackError" class="text-red-600 mt-2">{{ playbackError }}</p>
-        </div>
-
-        <div>
-            <button @click="startExport" class="bg-green-600 text-white px-6 py-3 rounded" :disabled="loading">
-                {{ loading ? 'Working…' : 'Continue to Preview' }}
-            </button>
-            <p v-if="error" class="text-red-600 mt-2">{{ error }}</p>
-        </div>
-
+        <button 
+          @click="tryPlayback" 
+          class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-orbitron transition-colors duration-200" 
+          :disabled="loading"
+        >
+          ▶ Play for 1s
+        </button>
+        <p v-if="playbackError" class="text-red-600 mt-2">{{ playbackError }}</p>
+      </div>
+  
+      <div class="mt-4">
+        <button 
+          @click="startExport" 
+          class="bg-accent hover:bg-accentLight text-black px-6 py-3 rounded font-orbitron transition-colors duration-200" 
+          :disabled="loading"
+        >
+          {{ loading ? 'Working…' : 'Continue to Preview' }}
+        </button>
+        <p v-if="error" class="text-red-600 mt-2">{{ error }}</p>
+      </div>
     </div>
-</template>
+  </template>
+  
 
 <script setup>
 import { ref } from 'vue';

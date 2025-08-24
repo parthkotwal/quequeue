@@ -6,54 +6,57 @@
 
 <template>
     <div class="space-y-6">
-        <h2 class="text-2xl font-bold">Preview Your Queue</h2>
-
-        <div v-if="loading">Loading your queue...</div>
-        <div v-else-if="error" class="text-red-600">{{ error }}</div>
-
-        <div v-if="queue && !loading">
-            <p class="mb-4 text-gray-700">Here's the current Spotify queue we detected.</p>
-
-            <TrackList :tracks="queue.tracks" :queueId="props.queueId" @trackRemoved="handleTrackRemoved"/>
-
-            <!-- ⬇️ Add this block here -->
-            <div class="flex items-center justify-between mt-4">
-                <div v-if="queue">
-                    <span class="text-sm text-gray-600">
-                        Snapshot taken at {{ formattedCreatedAt }}
-                    </span>
-                </div>
-
-                <button
-                    class="bg-blue-600 text-white px-4 py-2 rounded"
-                    @click="refreshSnapshot"
-                    :disabled="loading"
-                >
-                    Refresh from Spotify
-                </button>
-            </div>
-            <!-- ⬆️ End new block -->
-
-            <div class="flex justify-between mt-6">
-                <button
-                    class="bg-gray-400 text-white px-4 py-2 rounded"
-                    @click="emit('cancel', { queueId: props.queueId })"
-                    :disabled="loading"
-                >
-                    Back
-                </button>
-        
-                <button
-                    class="bg-green-600 text-white px-6 py-2 rounded"
-                    @click="confirm"
-                    :disabled="loading"
-                >
-                    Looks Good!
-                </button>
-            </div>
+      <h2 class="text-2xl font-orbitron mb-2">Preview Your Queue</h2>
+  
+      <div v-if="loading" class="text-secondaryText">Loading your queue...</div>
+      <div v-else-if="error" class="text-red-600">{{ error }}</div>
+  
+      <div v-if="queue && !loading">
+        <p class="mb-4 text-secondaryText">
+          Here's the current Spotify queue we detected.
+        </p>
+  
+        <TrackList :tracks="queue.tracks" :queueId="props.queueId" @trackRemoved="handleTrackRemoved"/>
+  
+        <!-- Snapshot Info + Refresh -->
+        <div class="flex items-center justify-between mt-4">
+          <div v-if="queue">
+            <span class="text-sm text-secondaryText">
+              Snapshot taken at {{ formattedCreatedAt }}
+            </span>
+          </div>
+  
+          <button
+            class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-orbitron transition-colors duration-200"
+            @click="refreshSnapshot"
+            :disabled="loading"
+          >
+            Refresh from Spotify
+          </button>
         </div>
+  
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between mt-6">
+          <button
+            class="bg-divider text-secondaryText px-4 py-2 rounded font-orbitron hover:bg-accentLight transition-colors duration-200"
+            @click="emit('cancel', { queueId: props.queueId })"
+            :disabled="loading"
+          >
+            Back
+          </button>
+      
+          <button
+            class="bg-accent hover:bg-accentLight text-black px-6 py-2 rounded font-orbitron transition-colors duration-200"
+            @click="confirm"
+            :disabled="loading"
+          >
+            Looks Good!
+          </button>
+        </div>
+      </div>
     </div>
 </template>
+  
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
