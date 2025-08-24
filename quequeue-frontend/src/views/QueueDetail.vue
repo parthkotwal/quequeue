@@ -3,31 +3,68 @@
         <div v-if="loading">Loading queue...</div>
     
         <div v-else>
-            <div class="flex justify-between items-start mb-4">
-                <div>
-                    <h1 class="text-3xl font-bold mb-2">{{ queue.name }}</h1>
-                    <p class="text-gray-700 mb-2">{{ queue.description }}</p>
-                </div>
+            <!-- Top bar: Back + Actions -->
+            <div class="flex justify-between items-center mb-6">
+                <button @click="router.push('/dashboard')" 
+                        class="bg-gray-200 text-gray-800 px-3 py-1 rounded hover:bg-gray-300">
+                ← Back
+                </button>
 
-                <!-- Edit & Delete Buttons -->
-                <div class="space-x-2">
-                    <button :disabled="!suggestAvailable || loadingSuggestions" @click="openSuggestModal" :class="suggestAvailable ? 'bg-green-500' : 'bg-gray-300 cursor-not-allowed'" class="px-4 py-2 rounded text-white">Suggest</button>
-                    <span class="text-gray-500 text-sm cursor-pointer" title="Green = suggestions available">i</span>
-
-                    <button @click="showEditModal = true" class="bg-yellow-500 text-white px-4 py-2 rounded">Edit</button>
-                    <button @click="deleteQueue" class="bg-red-600 text-white px-4 py-2 rounded">Delete</button>
+                <div class="flex flex-wrap gap-2">
+                <button :disabled="!suggestAvailable || loadingSuggestions" 
+                        @click="openSuggestModal" 
+                        :class="suggestAvailable ? 'bg-green-500' : 'bg-gray-300 cursor-not-allowed'" 
+                        class="px-4 py-2 rounded text-white">
+                    Suggest
+                </button>
+                
+                <button @click="showEditModal = true" class="bg-yellow-500 text-white px-4 py-2 rounded">Edit</button>
+                <button @click="deleteQueue" class="bg-red-600 text-white px-4 py-2 rounded">Delete</button>
                 </div>
             </div>
 
-            <img :src="queue.image_url" class="w-full max-w-md mb-6" alt="Queue Cover" />
+            <!-- Header content: Image + Info -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 items-start mb-8">
+                <!-- Queue Cover -->
+                <img :src="queue.image_url" class="w-full h-48 sm:h-56 object-cover rounded shadow-md" alt="Queue Cover" />
 
-            <button @click="restoreQueue" class="bg-blue-600 text-white px-4 py-2 mb-6 rounded">Restore to Spotify</button>
+                <!-- Queue Info -->
+                <div class="sm:col-span-2 flex flex-col justify-between">
+                    <h1 class="text-3xl font-bold mb-2 truncate">{{ queue.name }}</h1>
 
+                    <!-- Description with hover preview -->
+                    <div class="relative group max-w-lg">
+                        <p class="text-gray-700 text-sm sm:text-base line-clamp-3 overflow-hidden">
+                            {{ queue.description }}
+                        </p>
+                    </div>
+                    
+                </div>
+
+                <!-- Restore button -->
+                <div class="mt-4">
+                    <button 
+                        @click="restoreQueue" 
+                        :disabled="restoring" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded w-full sm:w-auto"
+                    >
+                        <svg v-if="restoring" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        <span>{{ restoring ? 'Restoring...' : 'Restore to Spotify' }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tracks -->
             <div v-if="queue.tracks.length">
                 <h2 class="text-xl font-semibold mb-2">Tracks</h2>
-                <TrackList :tracks="queue.tracks"/>
+                <TrackList :tracks="queue.tracks" :queue-id="queue.id" @trackRemoved="handleTrackRemoved"/>
             </div>
         </div>
+
+
 
         <!-- Edit Modal -->
         <div v-if="showEditModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -74,7 +111,8 @@
                                 <p class="text-sm text-gray-600">{{ track.artist_name }}</p>
                             </div>
                         </div>
-                        <button @click="addSuggestedTrack(track)" class="bg-blue-500 text-white px-3 py-1 rounded">Add</button>
+                        <button v-if="!queueTrackUris.has(track.track_uri)" @click="addSuggestedTrack(track)" class="bg-blue-500 text-white px-3 py-1 rounded">Add</button>
+                        <span v-else class="bg-gray-300 text-gray-600 px-3 py-1 rounded cursor-not-allowed">Added</span>
                     </div>
                 </div>
                 <div class="flex justify-end mt-4">
@@ -88,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import TrackList from '../components/TrackList.vue';
 import apiClient from '../api';
@@ -99,6 +137,7 @@ const queueId = route.params.id
 
 const queue = ref(null)
 const loading = ref(true)
+const restoring = ref(false)
 const error = ref(null)
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
@@ -108,6 +147,9 @@ const showSuggestModal = ref(false);
 const suggestions = ref([]);
 const loadingSuggestions = ref(false);
 
+const queueTrackUris = computed(() =>
+    new Set(queue.value?.tracks.map(t => t.track_uri) || [])
+);
 
 const editForm = ref({
     name: '',
@@ -129,11 +171,14 @@ const fetchQueue = async () => {
 }
 
 const restoreQueue = async () => {
+    restoring.value = true
     try {
         const res = await apiClient.get(`/queue/${queueId}/restore/`)
         alert(res.data.message)
     } catch(err) {
         alert("Restore failed: " + err.response?.data?.error || err.message)
+    } finally {
+        restoring.value = false
     }
 }
 
@@ -194,22 +239,18 @@ const openSuggestModal = async () => {
 
 const addSuggestedTrack = async (track) => {
     try {
-        await apiClient.post(`/queue/${queueId}/add_track/`, {
-            track_uri: track.track_uri
-        });
-
-        // Map to TrackList format
-        const newTrack = {
-            id: track.track_uri, // use track_uri as a temporary unique key
+        const res = await apiClient.post(`/queue/${queueId}/add_track/`, {
             track_uri: track.track_uri,
             track_name: track.track_name,
             artist_name: track.artist_name,
-            album_image_url: track.album_image_url,
-            position: queue.value.tracks.length // add position for display
-        };
+            album_image_url: track.album_image_url
+        });
 
-        // Add to queue tracks
+        // Map to TrackList format
+        const newTrack = res.data.track;
         queue.value.tracks.push(newTrack);
+
+        suggestions.value = suggestions.value.filter(s => s.track_uri !== track.track_uri);
 
         alert(`${track.track_name} added!`);
     } catch(err) {
@@ -217,6 +258,9 @@ const addSuggestedTrack = async (track) => {
     }
 };
 
+const handleTrackRemoved = async () => {
+    await fetchQueue()
+}
 
 
 onMounted(fetchQueue);

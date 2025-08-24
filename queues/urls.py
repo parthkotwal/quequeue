@@ -22,7 +22,7 @@ urlpatterns = [
     path('queue/<int:queue_id>/update/', views.update_queue, name="update_queue"),
     path('queue/<int:queue_id>/delete/', views.delete_queue, name="delete_queue"),
     path('queue/<int:queue_id>/add_track/', views.add_track_to_queue, name="add_track"),
-    path('queue/<int:queue_id>/remove_track/', views.remove_track_from_queue, name="remove_track"),
+    path('queue/<int:queue_id>/remove_track/<int:track_id>/', views.remove_track_from_queue, name="remove_track"),
 
 
     # RESTORE QUEUE
