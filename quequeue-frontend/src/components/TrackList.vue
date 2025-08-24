@@ -83,15 +83,23 @@ const emit = defineEmits(['trackRemoved'])
 
 const openMenu = ref(null)
 
+
 const toggleMenu = (id) => {
     openMenu.value = openMenu.value === id ? null : id
 }
 
+// Make a local reactive copy of tracks
+const localTracks = ref([...props.tracks])
+
 const removeTrack = async (track) => {
     try {
-        await apiClient.delete(`/queue/${props.queueId}/remove_track/${track.id}/`)
-        emit('trackRemoved', track.id)
+        const res = await apiClient.delete(`/queue/${props.queueId}/remove_track/${track.id}/`)
+        localTracks.value = localTracks.value.filter(t => t.id !== track.id)
 
+        emit('trackRemoved', { 
+            removedId: track.id, 
+            remainingTracks: localTracks.value 
+        })
         openMenu.value = null
     } catch (err) {
         alert('Failed to remove track: ' + (err.response?.data?.error || err.message))

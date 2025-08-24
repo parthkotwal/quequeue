@@ -381,7 +381,20 @@ def remove_track_from_queue(request, queue_id:int, track_id:int):
             t.position = idx
             t.save()
 
-    return JsonResponse({"message": "Track removed successfully"})
+    return JsonResponse({
+        "message": "Track removed successfully",
+        "remaining_tracks": [
+            {
+                "id": t.id,
+                "track_name": t.track_name,
+                "track_uri": t.track_uri,
+                "artist_name": t.artist_name,
+                "album_image_url": t.album_image_url,
+                "position": t.position,
+            }
+            for t in queue.tracks.order_by("position")
+        ]
+    })
 
 
 

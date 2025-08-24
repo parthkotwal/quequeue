@@ -14,7 +14,7 @@
         <div v-if="queue && !loading">
             <p class="mb-4 text-gray-700">Here's the current Spotify queue we detected.</p>
 
-            <TrackList :tracks="queue.tracks" />
+            <TrackList :tracks="queue.tracks" :queueId="props.queueId" @trackRemoved="handleTrackRemoved"/>
 
             <!-- ⬇️ Add this block here -->
             <div class="flex items-center justify-between mt-4">
@@ -151,6 +151,11 @@ async function refreshSnapshot() {
         loading.value = false
     }
 }
+
+const handleTrackRemoved = ({ removedId, remainingTracks }) => {
+    queue.value.tracks = remainingTracks
+}
+
 
 onMounted(fetchQueue)
 </script>
