@@ -130,7 +130,7 @@ async function refreshSnapshot() {
         // 1) create a fresh snapshot
         const createRes = await apiClient.post('/export_queue/', {
             name: 'Dummy',
-            image_url: 'https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/queue_covers/default.jpeg',
+            image_url: 'https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/queue_covers/default.png',
             description: 'Dummy'
         })
         const newId = createRes.data.queue_id
