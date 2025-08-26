@@ -12,10 +12,11 @@
     
             <!-- Album Cover -->
             <img
-            :src="track.album_image_url"
-            alt="Album Art"
-            class="w-12 h-12 object-cover rounded-md shadow-sm flex-shrink-0"
+                :src="track.album_image_url"
+                alt="Album Art"
+                class="w-12 h-12 object-cover rounded-[2px] lg:rounded-[4px] shadow-sm flex-shrink-0"
             />
+
     
             <!-- Track Info -->
             <div class="flex-1 min-w-0">

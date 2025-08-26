@@ -1,10 +1,12 @@
 <template>
   <div class="min-h-screen bg-primary text-white">
     <NavBar />
-    <router-view />
+    <!-- Add top padding equal to header height -->
+    <div class="pt-16">
+      <router-view />
+    </div>
   </div>
 </template>
-
 <script>
 import NavBar from "./components/NavBar.vue";
 

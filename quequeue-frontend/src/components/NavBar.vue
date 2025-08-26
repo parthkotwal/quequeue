@@ -1,21 +1,19 @@
 <template>
-  <div>
-    <!-- Top bar with hamburger -->
-    <header
-      class="flex items-center justify-between px-4 py-3 bg-primary text-white shadow-md"
-    >
-      <h1 class="text-xl font-silkscreen text-accent">Que Queue</h1>
+  <div class="fixed top-0 left-0 right-0 z-50 bg-primary px-4 sm:px-8 py-4 flex justify-between items-center shadow-md">
+    <!-- H1 top-left -->
+    <h1 class="text-xl font-silkscreen text-accent">Qué Queue</h1>
 
-      <!-- Hamburger button -->
+    <!-- Hamburger button top-right -->
+    <div class="relative">
       <button
         @click="toggleMenu"
-        class="focus:outline-none"
+        class="p-2 bg-primary text-accent rounded-md shadow-md focus:outline-none"
         aria-label="Menu"
       >
         <svg
           v-if="!isOpen"
           xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 text-accent"
+          class="h-6 w-6"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -26,7 +24,7 @@
         <svg
           v-else
           xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 text-accent"
+          class="h-6 w-6"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -35,69 +33,39 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-    </header>
 
-    <!-- Side drawer -->
-    <transition name="slide">
-      <aside
-        v-if="isOpen"
-        class="fixed top-0 left-0 h-full w-64 bg-primary shadow-xl z-40 flex flex-col"
-      >
-        <!-- Header -->
-        <div class="flex items-center justify-between px-4 py-3 border-b border-divider">
-          <h2 class="text-lg font-silkscreen text-accent">Menu</h2>
-          <button @click="toggleMenu" class="focus:outline-none">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-6 w-6 text-accent"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Nav links -->
-        <nav class="flex-1 px-4 py-6 space-y-4">
+      <!-- Fly-in menu -->
+      <transition name="slide-left">
+        <div
+          v-if="isOpen"
+          class="absolute bg-primary rounded-md shadow-lg px-4 py-2 flex sm:flex-row flex-col items-center
+                 sm:top-0 sm:right-full sm:mr-2 sm:space-x-6 sm:space-y-0 space-y-2 top-full right-0 mt-2 w-max"
+        >
           <RouterLink
             to="/dashboard"
-            class="block text-white hover:text-accent font-inconsolata transition"
+            class="text-white font-inconsolata hover:text-accent transition whitespace-nowrap"
             @click="toggleMenu"
           >
             Dashboard
           </RouterLink>
-
           <RouterLink
             to="/export"
-            class="block text-white hover:text-accent font-inconsolata transition"
+            class="text-white font-inconsolata hover:text-accent transition whitespace-nowrap"
             @click="toggleMenu"
           >
-            Export Queue
+            Export
           </RouterLink>
-
           <a
             href="https://open.spotify.com/"
             target="_blank"
-            class="block text-white hover:text-accent font-inconsolata transition"
+            class="text-white font-inconsolata hover:text-accent transition whitespace-nowrap"
             @click="toggleMenu"
           >
-            Open Spotify
+            Spotify
           </a>
-        </nav>
-      </aside>
-    </transition>
-
-    <!-- Overlay -->
-    <transition name="fade">
-      <div
-        v-if="isOpen"
-        class="fixed inset-0 bg-black bg-opacity-50 z-30"
-        @click="toggleMenu"
-      ></div>
-    </transition>
+        </div>
+      </transition>
+    </div>
   </div>
 </template>
 
@@ -112,38 +80,40 @@ function toggleMenu() {
 </script>
 
 <style scoped>
-/* Slide-in animation */
-.slide-enter-from {
-  transform: translateX(-100%);
-}
-.slide-enter-active {
-  transition: transform 0.3s ease;
-}
-.slide-enter-to {
-  transform: translateX(0%);
-}
-
-.slide-leave-from {
-  transform: translateX(0%);
-}
-.slide-leave-active {
-  transition: transform 0.3s ease;
-}
-.slide-leave-to {
-  transform: translateX(-100%);
-}
-
-/* Fade overlay */
-.fade-enter-from,
-.fade-leave-to {
+/* Slide-left animation for menu */
+.slide-left-enter-from {
+  transform: translateX(20px);
   opacity: 0;
 }
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-to,
-.fade-leave-from {
+.slide-left-enter-to {
+  transform: translateX(0);
   opacity: 1;
+}
+.slide-left-enter-active {
+  transition: all 0.25s ease-out;
+}
+
+.slide-left-leave-from {
+  transform: translateX(0);
+  opacity: 1;
+}
+.slide-left-leave-to {
+  transform: translateX(20px);
+  opacity: 0;
+}
+.slide-left-leave-active {
+  transition: all 0.25s ease-in;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  /* Menu becomes vertical and spaced nicely */
+  .flex.flex-col {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .space-y-2 > :not(:last-child) {
+    margin-bottom: 0.5rem;
+  }
 }
 </style>
