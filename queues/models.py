@@ -17,7 +17,7 @@ class Queue(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="queues")
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
-    image_url = models.URLField(default="https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/queue_covers/default.jpeg")
+    image_url = models.URLField(default="https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/queue_covers/default.png")
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):

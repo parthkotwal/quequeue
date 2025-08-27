@@ -4,8 +4,13 @@ import AuthCallback from '../views/AuthCallback.vue'
 import Dashboard from '../views/Dashboard.vue'
 import QueueDetail from '../views/QueueDetail.vue'
 import ExportWizard from '../views/ExportWizard.vue'
+import Landing from '../views/Landing.vue'
 
 const routes = [
+    {
+        path: '/', 
+        component: Landing
+    },
     { 
         path: '/login', 
         component: Login 

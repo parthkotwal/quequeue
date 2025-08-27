@@ -91,8 +91,8 @@
                 <textarea v-model="editForm.description" class="w-full border divider px-2 py-1 rounded bg-primary text-white"></textarea>
                 </label>
                 <div class="flex justify-end space-x-2">
-                <button @click="showEditModal = false" class="px-4 py-2 rounded border border-divider">Cancel</button>
-                <button @click="updateQueue" class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-silkscreen transition-colors duration-200">Save</button>
+                    <button @click="showEditModal = false" class="px-4 py-2 rounded border border-divider">Cancel</button>
+                    <button @click="updateQueue" class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-silkscreen transition-colors duration-200">Save</button>
                 </div>
             </div>
             </div>

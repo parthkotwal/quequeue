@@ -9,6 +9,7 @@
         @click="toggleMenu"
         class="p-2 bg-primary text-accent rounded-md shadow-md focus:outline-none"
         aria-label="Menu"
+        :aria-expanded="isOpen.toString()"
       >
         <svg
           v-if="!isOpen"
@@ -38,13 +39,14 @@
       <transition name="slide-left">
         <div
           v-if="isOpen"
-          class="absolute bg-primary rounded-md shadow-lg px-4 py-2 flex sm:flex-row flex-col items-center
-                 sm:top-0 sm:right-full sm:mr-2 sm:space-x-6 sm:space-y-0 space-y-2 top-full right-0 mt-2 w-max"
+          class="absolute z-50 bg-primary rounded-md shadow-lg px-4 py-2 flex sm:flex-row flex-col items-center
+                 sm:top-0 sm:right-full sm:mr-2 sm:space-x-6 sm:space-y-0 space-y-2 top-full right-0 w-max"
         >
           <RouterLink
             to="/dashboard"
             class="text-white font-inconsolata hover:text-accent transition whitespace-nowrap"
             @click="toggleMenu"
+            tabindex="0"
           >
             Dashboard
           </RouterLink>
@@ -52,6 +54,7 @@
             to="/export"
             class="text-white font-inconsolata hover:text-accent transition whitespace-nowrap"
             @click="toggleMenu"
+            tabindex="0"
           >
             Export
           </RouterLink>
@@ -60,6 +63,7 @@
             target="_blank"
             class="text-white font-inconsolata hover:text-accent transition whitespace-nowrap"
             @click="toggleMenu"
+            tabindex="0"
           >
             Spotify
           </a>

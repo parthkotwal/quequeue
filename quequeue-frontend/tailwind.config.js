@@ -11,7 +11,8 @@ export default {
         accent: '#FFD700',        
         accentLight: '#FFEC99',   
         secondaryText: '#B3B3B3', 
-        divider: '#2C2C2C',       
+        divider: '#2C2C2C',  
+        spotifyGreen: '#1ED760'     
       },
       fontFamily: {
         silkscreen: ['Silkscreen', 'sans-serif'], 
