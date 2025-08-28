@@ -8,10 +8,10 @@
       class="album-layer" 
       v-for="(cover, idx) in visibleCovers" 
       :key="idx"
-      :style="layerStyle(idx)"
+      :style="layerStyle(cover, idx)"
       :class="{ 'evaporating': scrollY > 100 }"
     >
-      <img :src="cover" :alt="`album ${idx+1}`" class="album-img" />
+      <img :src="cover.url" :alt="`album ${idx+1}`" class="album-img" />
     </div>
     <!-- subtle overlay to dim background -->
     <div class="absolute inset-0 bg-gradient-to-b from-transparent to-[rgba(0,0,0,0.2)]" style="z-index: 2;"></div>
@@ -19,13 +19,20 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 const modules = import.meta.glob('../assets/album_covers/*.webp', { eager: true });
 const coversAll = Object.values(modules).map(m => m.default);
 
-// Choose up to 12 covers
-const visibleCovers = coversAll.slice(0, 12);
+function shuffle(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+const visibleCovers = ref([])
 
 // Track scroll position
 const scrollY = ref(0);
@@ -36,6 +43,17 @@ const handleScroll = () => {
 };
 
 onMounted(() => {
+  const shuffled = shuffle(coversAll).slice(0, 12);
+  visibleCovers.value = shuffled.map((cover, i) => ({
+    url: cover,
+    left: (i % 6) * 16 + 8,         // evenly spaced across width
+    startTop: -150 - (i * 30),      // staggered start above viewport
+    scale: 0.6 + (i % 3) * 0.1,     // cycle between 0.6, 0.7, 0.8
+    rotation: (i % 5 - 2) * 5,      // -10, -5, 0, 5, 10 deg
+    duration: 10 + (i % 4) * 3,     // 10, 13, 16, 19s
+    delay: -(i % 6) * 2             // stagger delay: 0, -2, -4...
+  }));
+
   window.addEventListener('scroll', handleScroll, { passive: true });
 });
 
@@ -43,39 +61,22 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
 });
 
-// deterministic positioning for rainfall effect
-function layerStyle(i) {
-  // Spread horizontally across viewport
-  const left = (i * 83) % 100; // wrap around 0..99
-  
-  // Start above viewport for rainfall effect
-  const startTop = -150 - (i * 50); // stagger start positions
-  
-  // Scale varies
-  const scale = 0.4 + ((i % 5) * 0.15); // 0.4 to 0.85
-  
-  // Slight rotation
-  const rotation = ((i * 19) % 30) - 15; // -15 to 15 deg
-  
-  // Animation timing - staggered for continuous rainfall
-  const duration = 8 + (i % 4) * 3; // 8-20 seconds
-  const delay = (i % 8) * -2; // staggered delays
-  
-  // Calculate evaporation based on scroll
-  const evaporationIntensity = Math.min(scrollY.value / 300, 1); // 0 to 1
-  const finalOpacity = 0.25 * (1 - evaporationIntensity * 0.7); // More visible initially
-  
+function layerStyle(cover, i) {
+  const evaporationIntensity = Math.min(scrollY.value / 300, 1);
+  const finalOpacity = 0.25 * (1 - evaporationIntensity * 0.7);
+
   return {
-    left: `${left}%`,
-    top: `${startTop}px`,
-    transform: `translate(-50%, 0) scale(${scale}) rotate(${rotation}deg)`,
-    animationDuration: `${duration}s`,
-    animationDelay: `${delay}s`,
+    left: `${cover.left}%`,
+    top: `${cover.startTop}px`,
+    transform: `translate(-50%, 0) scale(${cover.scale}) rotate(${cover.rotation}deg)`,
+    animationDuration: `${cover.duration}s`,
+    animationDelay: `${cover.delay}s`,
     zIndex: 1,
     opacity: finalOpacity,
     '--evaporate-amount': `${evaporationIntensity * 30}px`
   };
 }
+
 </script>
 
 <style scoped>

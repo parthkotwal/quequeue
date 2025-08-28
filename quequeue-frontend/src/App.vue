@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-primary text-white">
     <!-- Add top padding equal to header height -->
-    <div class="pt-16">
+    <div>
       <router-view />
     </div>
   </div>
