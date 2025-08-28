@@ -3,50 +3,51 @@
     <!-- album covers background -->
     <AlbumBackground />
 
-    <!-- top-left logo -->
-    <div class="absolute top-6 left-8 z-20">
-      <img
-        v-if="chosenLogo"
-        :src="chosenLogo"
-        :alt="logoAlt"
-        class="h-12 w-auto select-none"
-      />
-      <div v-else class="text-2xl font-silkscreen text-accent">Que Queue</div>
-    </div>
-
-    <!-- top-right account icon + status -->
-    <div class="absolute top-6 right-8 z-20 flex items-center gap-3">
-      <!-- account icon -->
-      <button
-        @click="handleAccountClick"
-        class="w-10 h-10 flex items-center justify-center rounded-full bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.2)] transition"
-        :title="isLoggedIn ? 'Go to Dashboard' : 'Login to your account'"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-        </svg>
-      </button>
-
-      <!-- conditional user state -->
-      <div v-if="isLoggedIn" class="flex items-center gap-2">
-        <span class="font-inconsolata text-sm text-secondaryText">Hi, {{ user.name }}</span>
+    <!-- top (logo and acct) -->
+    <div>
+      <!-- top-left logo -->
+      <div class="absolute top-6 left-8 z-20">
+        <img
+          v-if="chosenLogo"
+          :src="chosenLogo"
+          :alt="logoAlt"
+          class="h-12 w-auto select-none"
+        />
+        <div v-else class="text-2xl font-silkscreen text-accent">Que Queue</div>
       </div>
 
-      <div v-else class="flex items-center gap-2">
-        <span class="font-inconsolata text-sm text-secondaryText">Guest</span>
-        <router-link
-          to="/login"
-          class="px-4 py-2 rounded-xl border border-divider bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)] focus:outline-none focus:ring-2 focus:ring-accentLight transition"
+      <!-- top-right account icon + status -->
+      <div class="absolute top-6 right-8 z-20 flex items-center gap-3">
+        <!-- account icon -->
+        <button
+          @click="handleAccountClick"
+          class="w-10 h-10 flex items-center justify-center rounded-full bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.2)] transition"
+          :title="isLoggedIn ? 'Go to Dashboard' : 'Login to your account'"
         >
-          Login
-        </router-link>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="white" d="M12 2.5a5.5 5.5 0 0 1 3.096 10.047 9.005 9.005 0 0 1 5.9 8.181.75.75 0 1 1-1.499.044 7.5 7.5 0 0 0-14.993 0 .75.75 0 0 1-1.5-.045 9.005 9.005 0 0 1 5.9-8.18A5.5 5.5 0 0 1 12 2.5ZM8 8a4 4 0 1 0 8 0 4 4 0 0 0-8 0Z"></path></svg>
+        </button>
+
+        <!-- conditional user state -->
+        <div v-if="isLoggedIn" class="flex items-center gap-2">
+          <span class="font-inconsolata text-sm text-secondaryText">Hi, {{ user.name }}</span>
+        </div>
+
+        <div v-else class="flex items-center gap-2">
+          <span class="font-inconsolata text-sm text-secondaryText">Guest</span>
+          <router-link
+            to="/login"
+            class="px-4 py-2 rounded-xl border border-divider bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)] focus:outline-none focus:ring-2 focus:ring-accentLight transition"
+          >
+            Login
+          </router-link>
+        </div>
       </div>
     </div>
 
     <!-- center tagline + glow -->
     <div class="flex flex-col flex-1 items-center justify-center text-center z-20 px-6">
       <h1 class="text-5xl lg:text-6xl font-silkscreen leading-tight mb-3 relative">
-        ¿Qué queue? <span class="block">Que queue.</span>
+        ¿Qué queue? <span class="block text-accent">Que queue.</span>
         <!-- gold glow behind tagline -->
         <span
           class="absolute inset-0 z-10 blur-3xl glow-bg"
