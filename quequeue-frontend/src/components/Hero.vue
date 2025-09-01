@@ -1,7 +1,7 @@
 <template>
   <section class="relative min-h-screen flex flex-col bg-primary text-white overflow-hidden">
     <!-- album covers background -->
-    <AlbumBackground />
+    <AlbumBackground class="pointer-events-none"/>
 
     <!-- top (logo and acct) -->
     <div>
@@ -17,11 +17,11 @@
       </div>
 
       <!-- top-right account icon + status -->
-      <div class="absolute top-6 right-8 z-20 flex items-center gap-3">
+      <div class="absolute top-6 right-8 z-30 flex items-center gap-3">
         <!-- account icon -->
         <button
           @click="handleAccountClick"
-          class="w-10 h-10 flex items-center justify-center rounded-full bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.2)] transition"
+          class="w-10 h-10 flex items-center justify-center rounded-full bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.2)] transition cursor-pointer" 
           :title="isLoggedIn ? 'Go to Dashboard' : 'Login to your account'"
         >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="white" d="M12 2.5a5.5 5.5 0 0 1 3.096 10.047 9.005 9.005 0 0 1 5.9 8.181.75.75 0 1 1-1.499.044 7.5 7.5 0 0 0-14.993 0 .75.75 0 0 1-1.5-.045 9.005 9.005 0 0 1 5.9-8.18A5.5 5.5 0 0 1 12 2.5ZM8 8a4 4 0 1 0 8 0 4 4 0 0 0-8 0Z"></path></svg>
@@ -88,15 +88,14 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { useSessionStore } from '../stores/session.js' // Adjust path as needed
+import { useSessionStore } from '../stores/session.js'
+import { storeToRefs } from 'pinia';
 import AlbumBackground from './AlbumBackground.vue';
 import spotifyLogo from '../assets/Spotify_logo.svg'
 
 const router = useRouter()
 const sessionStore = useSessionStore()
-
-// Reactive access to user state
-const { user, isLoggedIn } = sessionStore
+const { user, isLoggedIn } = storeToRefs(sessionStore)
 
 const logoModules = import.meta.glob('../assets/qq_logos/*.svg', { eager: true });
 const logos = Object.entries(logoModules).map(([p, m]) => ({ path: p, url: m.default }));

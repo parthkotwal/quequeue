@@ -17,8 +17,11 @@ DB_CONFIG = {
 OUTPUT_DIR = "/Users/parthkotwal/Projects/quequeue/quequeue-frontend/src/assets/album_covers"  # directory to store images
 TABLE_NAME = "queues_track"
 IMAGE_COLUMN = "album_image_url"
-ID_COLUMN = "id"  # unique identifier column (assumed)
+ID_COLUMN = "id"
 # =======================
+
+# Use readable names instead of numbers
+FILE_NAMES = ["alpha", "bravo", "charlie", "delta", "echo", "foxtrot", "golf"]
 
 
 def get_unique_filename(base_path):
@@ -62,21 +65,23 @@ def main():
     conn = psycopg2.connect(**DB_CONFIG)
     cursor = conn.cursor(cursor_factory=DictCursor)
 
-    # Fetch all rows
-    cursor.execute(f"SELECT {ID_COLUMN}, {IMAGE_COLUMN} FROM {TABLE_NAME}")
+    # Fetch first 7 rows only
+    cursor.execute(f"SELECT {ID_COLUMN}, {IMAGE_COLUMN} FROM {TABLE_NAME} LIMIT 7")
     rows = cursor.fetchall()
 
     print(f"Found {len(rows)} rows to process...")
 
-    for row in rows:
-        track_id = row[ID_COLUMN]
+    for idx, row in enumerate(rows):
         url = row[IMAGE_COLUMN]
 
         if not url:
-            print(f"⚠️ Skipping track {track_id}: no URL")
+            print(f"⚠️ Skipping row {idx+1}: no URL")
             continue
 
-        filename = os.path.join(OUTPUT_DIR, f"{track_id}_2.webp")
+        # Pick name from FILE_NAMES list
+        name = FILE_NAMES[idx] if idx < len(FILE_NAMES) else f"extra_{idx+1}"
+        filename = os.path.join(OUTPUT_DIR, f"{name}.webp")
+
         download_and_save_image(url, filename)
 
     cursor.close()
