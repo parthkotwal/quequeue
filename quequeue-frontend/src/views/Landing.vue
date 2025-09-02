@@ -86,16 +86,9 @@
           </router-link>
         </div>
 
-        <!-- Minimal Footer -->
-        <footer class="border-t border-divider pt-8">
-          <div class="flex justify-center items-center gap-6 text-sm text-secondaryText font-inconsolata">
-            <a href="#" class="hover:text-accent transition">Privacy</a>
-            <span>•</span>
-            <a href="#" class="hover:text-accent transition">Terms</a>
-            <span>•</span>
-            <span>© 2025 QueQueue</span>
-          </div>
-        </footer>
+        
+        <MainFooter />
+        
       </div>
     </section>
   </main>
@@ -106,6 +99,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import Hero from '../components/Hero.vue'
 import QueuePreview from '../components/QueuePreview.vue'
 import MLPreview from '../components/MLPreview.vue'
+import MainFooter from '../components/MainFooter.vue'
 
 const walkthroughSection = ref(null)
 const mlSection = ref(null)

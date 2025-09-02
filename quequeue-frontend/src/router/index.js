@@ -5,6 +5,8 @@ import Dashboard from '../views/Dashboard.vue'
 import QueueDetail from '../views/QueueDetail.vue'
 import ExportWizard from '../views/ExportWizard.vue'
 import Landing from '../views/Landing.vue'
+import PrivacyPolicy from '../views/PrivacyPolicy.vue'
+import Terms from '../views/Terms.vue'
 
 const routes = [
     {
@@ -33,6 +35,14 @@ const routes = [
         path: '/export',
         component: ExportWizard,
         meta: { requiresAuth: true }
+    },
+    {
+        path: '/privacy',
+        component: PrivacyPolicy
+    },
+    {
+        path: '/terms',
+        component: Terms
     }
 ]
 

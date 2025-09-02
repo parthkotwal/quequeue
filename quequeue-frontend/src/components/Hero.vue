@@ -21,15 +21,20 @@
         <!-- account icon -->
         <button
           @click="handleAccountClick"
-          class="w-10 h-10 flex items-center justify-center rounded-full bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.2)] transition cursor-pointer" 
+          :disabled="isLoading"
+          class="w-10 h-10 flex items-center justify-center rounded-full bg-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.2)] transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" 
           :title="isLoggedIn ? 'Go to Dashboard' : 'Login to your account'"
         >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="white" d="M12 2.5a5.5 5.5 0 0 1 3.096 10.047 9.005 9.005 0 0 1 5.9 8.181.75.75 0 1 1-1.499.044 7.5 7.5 0 0 0-14.993 0 .75.75 0 0 1-1.5-.045 9.005 9.005 0 0 1 5.9-8.18A5.5 5.5 0 0 1 12 2.5ZM8 8a4 4 0 1 0 8 0 4 4 0 0 0-8 0Z"></path></svg>
         </button>
 
         <!-- conditional user state -->
-        <div v-if="isLoggedIn" class="flex items-center gap-2">
-          <span class="font-inconsolata text-sm text-secondaryText">Hi, {{ user.name }}</span>
+        <div v-if="isLoading" class="flex items-center gap-2">
+          <span class="font-inconsolata text-sm text-secondaryText">Loading...</span>
+        </div>
+        
+        <div v-else-if="isLoggedIn" class="flex items-center gap-2">
+          <span class="font-inconsolata text-sm text-secondaryText">Hi, {{ userName }}</span>
         </div>
 
         <div v-else class="flex items-center gap-2">
@@ -72,15 +77,29 @@
 
         <!-- Dynamic main CTA button -->
         <router-link
+          v-if="!isLoading"
           :to="isLoggedIn ? '/dashboard' : '/login'"
           class="px-6 py-3 rounded-2xl border border-divider bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)] focus:outline-none focus:ring-2 focus:ring-accentLight transition"
         >
           {{ isLoggedIn ? 'Go to Dashboard' : 'Que Queue Login' }}
         </router-link>
+        
+        <!-- Loading state for CTA button -->
+        <div
+          v-else
+          class="px-6 py-3 rounded-2xl border border-divider bg-[rgba(255,255,255,0.02)] opacity-50"
+        >
+          Loading...
+        </div>
       </div>
 
       <p class="text-secondaryText text-sm mt-6 font-inconsolata">
-        {{ isLoggedIn ? 'Welcome back! Ready to manage your queues?' : 'Build your queue in Spotify and come back OR start exporting!' }}
+        <template v-if="isLoading">
+          Checking authentication...
+        </template>
+        <template v-else>
+          {{ isLoggedIn ? 'Welcome back! Ready to manage your queues?' : 'Build your queue in Spotify and come back OR start exporting!' }}
+        </template>
       </p>
     </div>
   </section>
@@ -95,7 +114,7 @@ import spotifyLogo from '../assets/Spotify_logo.svg'
 
 const router = useRouter()
 const sessionStore = useSessionStore()
-const { user, isLoggedIn } = storeToRefs(sessionStore)
+const { user, isLoggedIn, isLoading, userName } = storeToRefs(sessionStore)
 
 const logoModules = import.meta.glob('../assets/qq_logos/*.svg', { eager: true });
 const logos = Object.entries(logoModules).map(([p, m]) => ({ path: p, url: m.default }));
@@ -115,13 +134,16 @@ const logoAlt = 'Que Queue logo';
 
 // Handle account icon click
 const handleAccountClick = () => {
-  if (isLoggedIn) {
+  if (isLoading.value) return;
+  
+  if (isLoggedIn.value) {
     router.push('/dashboard')
   } else {
     router.push('/login')
   }
 }
 </script>
+
 
 
 <style scoped>

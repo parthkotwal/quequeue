@@ -26,4 +26,7 @@ router.afterEach((to) => {
     console.log("Navigated to:", to.path)
 })
 
-app.mount('#app')
+const sessionStore = useSessionStore(pinia)
+sessionStore.initializeAuth().then(() => {
+    app.mount('#app')
+})
