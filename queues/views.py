@@ -105,16 +105,27 @@ def login_required(view_func):
     def wrapped_view(request, *args, **kwargs):
         if "user_id" not in request.session:
             return JsonResponse({"authenticated": False}, status=401)
+    
+        try:
+            user = User.objects.get(pk=request.session["user_id"])
+        except User.DoesNotExist:
+            request.session.flush()
+            return JsonResponse({"authenticated": False}, status=401)
+            
         return view_func(request, *args, **kwargs)
     return wrapped_view
 
 @login_required
 def verify_auth(request):
-    user = get_object_or_404(User, pk=request.session["user_id"])
-    return JsonResponse({
-        "authenticated": True,
-        "user_display_name": user.display_name
-    })
+    try:
+        user = get_object_or_404(User, pk=request.session["user_id"])
+        return JsonResponse({
+            "authenticated": True,
+            "user_display_name": user.display_name
+        })
+    except (User.DoesNotExist, KeyError):
+        request.session.flush()
+        return JsonResponse({"authenticated": False}, status=401)
     
 
 @login_required

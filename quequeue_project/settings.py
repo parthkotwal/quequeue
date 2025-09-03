@@ -52,6 +52,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'queues.middleware.SessionDebugMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -172,12 +173,20 @@ S3 = boto3.client(
     region_name = AWS_S3_REGION_NAME
 )
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.db' 
+SESSION_COOKIE_NAME = 'quequeue_sessionid' 
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = False 
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
-SESSION_COOKIE_SAMESITE = None 
-SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_SECURE = False 
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 CSRF_COOKIE_SECURE = False  # Set to True in production
-CSRF_COOKIE_SAMESITE = None
+CSRF_COOKIE_SAMESITE = 'Lax'
 
 FRONTEND_URL =  "http://127.0.0.1:5173"
+
+if DEBUG:
+    SESSION_COOKIE_AGE = 3600  # 1 hour for development
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = True
