@@ -138,8 +138,8 @@
               <path d="M3 12a9 9 0 1 0 9 -9" />
               <path d="M3 3v5h5" />
             </svg>
-  Restore to Spotify
-</button>
+            Restore to Spotify
+          </button>
 
         </div>
       </div>

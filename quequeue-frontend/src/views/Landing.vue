@@ -3,6 +3,15 @@
     <!-- Hero section with rainfall background -->
     <Hero />
 
+    <!-- Spotify Problems Section -->
+    <section ref="problemsSection" class="relative py-20 z-10 bg-gradient-to-b from-primary/90 to-primary">
+      <!-- Subtle grid pattern background -->
+      <div class="absolute inset-0 opacity-[0.02]" style="background-image: radial-gradient(circle at 1px 1px, rgba(255,215,0,0.3) 1px, transparent 0); background-size: 20px 20px;"></div>
+      
+      <!-- Problems component -->
+      <SpotifyProblems ref="problemsRef" />
+    </section>
+
     <!-- Walkthrough Section -->
     <section ref="walkthroughSection" class="relative py-20 bg-primary">
       <!-- Background gradient overlay -->
@@ -100,9 +109,12 @@ import Hero from '../components/Hero.vue'
 import QueuePreview from '../components/QueuePreview.vue'
 import MLPreview from '../components/MLPreview.vue'
 import MainFooter from '../components/MainFooter.vue'
+import SpotifyProblems from '../components/SpotifyProblems.vue'
 
 const walkthroughSection = ref(null)
 const mlSection = ref(null)
+const problemsSection = ref(null)
+const problemsRef = ref(null)
 const queuePreviewRef = ref(null)
 const mlPreviewRef = ref(null)
 
@@ -118,17 +130,21 @@ onMounted(() => {
             queuePreviewRef.value.setVisible(true)
           } else if (entry.target === mlSection.value && mlPreviewRef.value) {
             mlPreviewRef.value.setVisible(true)
+          } else if (entry.target === problemsSection.value && problemsRef.value) {
+            problemsRef.value.setVisible(true)
           }
         }
       })
     },
-    { threshold: 0.3, rootMargin: '-100px' }
+    { threshold: 0.1, rootMargin: '-100px' }
   )
 
   // Observe sections
   if (walkthroughSection.value) observer.observe(walkthroughSection.value)
   if (mlSection.value) observer.observe(mlSection.value)
+  if (problemsSection.value) observer.observe(problemsSection.value)
 })
+
 
 onUnmounted(() => {
   if (observer) {

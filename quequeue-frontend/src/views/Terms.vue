@@ -6,7 +6,7 @@
       <div class="max-w-4xl mx-auto px-6 py-4">
         <div class="flex items-center justify-between">
           <router-link to="/" class="flex items-center space-x-2 hover:opacity-80 transition">
-            <span class="text-2xl font-['Silkscreen'] text-[#FFD700]">QueQueue</span>
+            <img src="../assets/qq_logos/qq_nobg.svg" class="h-12 w-auto"></img>
           </router-link>
           <router-link to="/privacy" class="text-[#B3B3B3] hover:text-[#FFD700] transition">
             Privacy Policy →
