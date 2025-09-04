@@ -1,27 +1,32 @@
 quequeue/
-├── Dockerfile
-├── docker-compose.yml
-├── requirements.txt
-├── .env
-├── .gitignore
-│
-├── quequeue_project/           # Django project core
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-│
-├── queues/                     # Django app
-│   ├── __init__.py
-│   ├── admin.py
-│   ├── apps.py
-│   ├── middleware.py
-│   ├── models.py
-│   ├── spotify.py
-│   ├── tests.py
-│   ├── urls.py
-│   └── views.py
+├── quequeue-backend/           # Django backend + data + configs
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   ├── requirements.txt
+│   ├── .env
+│   ├── manage.py
+│   │
+│   ├── quequeue_project/       # Django project core
+│   │   ├── __init__.py
+│   │   ├── asgi.py
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   │
+│   ├── queues/                 # Django app
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── middleware.py
+│   │   ├── models.py
+│   │   ├── spotify.py
+│   │   ├── tests.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   │
+│   └── song_data/              # ML / data science experiments
+│       ├── notebooks/          # Jupyter notebooks
+│       └── datasets/           # raw/processed datasets
 │
 ├── quequeue-frontend/          # Vue.js frontend
 │   ├── node_modules/           # dependencies
@@ -32,16 +37,16 @@ quequeue/
 │       │   └── ... Main App Views ...
 │       │
 │       ├── components/
-│       │   ├── Hero.vue              # logo + tagline + CTAs
-│       │   ├── AlbumBackground.vue   # animated album cover grid
-│       │   ├── QueuePreview.vue      # walkthrough animated mock queue
-│       │   ├── MLPreview.vue         # "need 3 tracks" demo card
-│       │   ├── NavBar.vue            # footer/navigation
+│       │   ├── Hero.vue
+│       │   ├── AlbumBackground.vue
+│       │   ├── QueuePreview.vue
+│       │   ├── MLPreview.vue
+│       │   ├── NavBar.vue
 │       │   └── ... Other components ...
 │       │
 │       ├── assets/
-│       │   ├── qq_logos/             # .svg logo variants
-│       │   ├── album_covers/         # 12 .webp album cover squares
+│       │   ├── qq_logos/
+│       │   ├── album_covers/
 │       │   └── Spotify_logo.svg
 │       │
 │       ├── router/
@@ -55,6 +60,5 @@ quequeue/
 │       ├── main.js
 │       └── style.css
 │
-└── song_data/                 # ML / data science experiments
-    ├── notebooks/             # Jupyter notebooks
-    └── datasets/              # raw/processed datasets
+└── docker-compose.yml          # orchestrates backend + frontend containers
+└── .gitignore
