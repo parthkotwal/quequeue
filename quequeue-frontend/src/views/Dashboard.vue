@@ -1,4 +1,5 @@
 <template>
+    <NavBar />
     <div class="dashboard-page min-h-screen bg-primary text-white px-6 py-8">
         <div class="max-w-4xl mx-auto">
             <!-- Welcome Header -->
@@ -9,17 +10,18 @@
             <!-- Action Buttons -->
             <div class="mb-8 flex flex-wrap gap-4">
                 <button 
-                    @click="fetchQueues" 
-                    class="bg-accent hover:bg-accentLight text-black font-silkscreen px-5 py-2 rounded-lg transition-colors duration-200"
-                >
-                    Refresh Queues
-                </button>
-                <button 
                     @click="goToExport" 
                     class="bg-accent hover:bg-accentLight text-black font-silkscreen px-5 py-2 rounded-lg transition-colors duration-200"
                 >
                     Export Queue
                 </button>
+                <button 
+                    @click="fetchQueues" 
+                    class="bg-accent hover:bg-accentLight text-black font-silkscreen px-5 py-2 rounded-lg transition-colors duration-200"
+                >
+                    Refresh Queues
+                </button>
+                
             </div>
     
             <!-- Loading / Empty State -->
@@ -51,6 +53,7 @@ import apiClient from '../api';
 import { useSessionStore } from '../stores/session';
 import { useRouter } from 'vue-router';
 import QueueCard from '../components/QueueCard.vue';
+import NavBar from '../components/NavBar.vue';
 
 const session = useSessionStore()
 const router = useRouter()

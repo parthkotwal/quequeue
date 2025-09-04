@@ -7,6 +7,7 @@ import ExportWizard from '../views/ExportWizard.vue'
 import Landing from '../views/Landing.vue'
 import PrivacyPolicy from '../views/PrivacyPolicy.vue'
 import Terms from '../views/Terms.vue'
+import PageNotFound from '../views/PageNotFound.vue'
 
 const routes = [
     {
@@ -43,6 +44,13 @@ const routes = [
     {
         path: '/terms',
         component: Terms
+    },
+
+    // MUST BE LAST ONE
+    {
+        path: '/:pathMatch(.*)*',
+        name: 'PageNotFound',
+        component: PageNotFound
     }
 ]
 

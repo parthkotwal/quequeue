@@ -1,7 +1,15 @@
 <template>
   <div class="fixed top-0 left-0 right-0 z-50 bg-primary px-4 sm:px-8 py-4 flex justify-between items-center shadow-md">
     <!-- H1 top-left -->
-    <h1 class="text-xl font-silkscreen text-accent">Qué Queue</h1>
+    <router-link to="/" class="">
+      <img src="../assets/qq_logos/qq_nobg.svg" class="h-12 w-auto"></img>
+    </router-link>
+
+    <!-- <div class="absolute top-6 left-8 z-20">
+      <router-link to="/" class="flex items-center space-x-2 hover:opacity-80 transition">
+        <img src="../assets/qq_logos/qq_nobg.svg" class="h-12 w-auto"></img>
+      </router-link>
+    </div> -->
 
     <!-- Hamburger button top-right -->
     <div class="relative">

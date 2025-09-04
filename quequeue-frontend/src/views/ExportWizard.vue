@@ -1,4 +1,5 @@
 <template>
+    <NavBar />
     <div class="max-w-3xl mx-auto p-6 bg-primary text-white rounded-lg shadow-md">
         <component 
             :is="currentComponent"
@@ -15,6 +16,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import NavBar from '../components/NavBar.vue';
 
 // Children Components
 import ExportIntro from './ExportIntro.vue'
