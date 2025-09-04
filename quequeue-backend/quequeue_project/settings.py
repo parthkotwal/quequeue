@@ -31,7 +31,7 @@ if os.getenv("DEBUG", "False").lower() in ("true", "1"):
 else:
     DEBUG = False
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'web']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'web', "quequeue-web.onrender.com"]
 
 
 # Application definition
