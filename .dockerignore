@@ -1,8 +1,0 @@
-.git
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.env
-quequeue-frontend/node_modules
-*.log
