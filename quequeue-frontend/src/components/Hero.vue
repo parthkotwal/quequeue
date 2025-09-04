@@ -69,7 +69,7 @@
           href="https://open.spotify.com/"
           target="_blank"
           rel="noopener noreferrer"
-          class="px-6 py-3 rounded-2xl bg-spotifyGreen hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-spotifyGreen/40 transition inline-flex items-center gap-2"
+          class="px-6 py-3 rounded-2xl bg-spotifyGreen hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-spotifyGreen/40 transition inline-flex items-center gap-2 text-primary"
         >
           Open
           <img :src="spotifyLogo" alt="Spotify" class="w-5 h-5" />
@@ -110,7 +110,7 @@ import { useRouter } from 'vue-router'
 import { useSessionStore } from '../stores/session.js'
 import { storeToRefs } from 'pinia';
 import AlbumBackground from './AlbumBackground.vue';
-import spotifyLogo from '../assets/Spotify_logo.svg'
+import spotifyLogo from '../assets/Spotify_logo.svg';
 
 const router = useRouter()
 const sessionStore = useSessionStore()

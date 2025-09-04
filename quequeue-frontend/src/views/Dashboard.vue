@@ -1,6 +1,6 @@
 <template>
     <NavBar />
-    <div class="dashboard-page min-h-screen bg-primary text-white px-6 py-8">
+    <div class="dashboard-page bg-primary text-white px-6 py-8 pt-20 min-h-screen">
         <div class="max-w-4xl mx-auto">
             <!-- Welcome Header -->
             <h1 class="text-3xl md:text-4xl font-silkscreen mb-6">
@@ -45,6 +45,7 @@
 
         </div>
     </div>
+    <MainFooter />
 </template>
 
 <script setup>
@@ -54,6 +55,7 @@ import { useSessionStore } from '../stores/session';
 import { useRouter } from 'vue-router';
 import QueueCard from '../components/QueueCard.vue';
 import NavBar from '../components/NavBar.vue';
+import MainFooter from '../components/MainFooter.vue';
 
 const session = useSessionStore()
 const router = useRouter()

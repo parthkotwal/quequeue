@@ -1,6 +1,6 @@
 <template>
     <NavBar />
-    <div class="queue-detail-page min-h-screen bg-primary text-white px-6 py-8">
+    <div class="queue-detail-page bg-primary text-white px-6 py-8 pt-20 min-h-screen">
         <div class="max-w-4xl mx-auto">
             <!-- Loading State -->
             <div v-if="loading" class="text-secondaryText">Loading queue...</div>
@@ -137,6 +137,7 @@
     
         </div>
     </div>
+    <MainFooter />
 </template>
   
 
@@ -146,6 +147,7 @@ import { useRoute, useRouter } from 'vue-router';
 import TrackList from '../components/TrackList.vue';
 import apiClient from '../api';
 import NavBar from '../components/NavBar.vue';
+import MainFooter from '../components/MainFooter.vue';
 
 const route = useRoute()
 const router = useRouter()

@@ -1,6 +1,6 @@
 <template>
     <NavBar />
-    <div class="max-w-3xl mx-auto p-6 bg-primary text-white rounded-lg shadow-md">
+    <div class="max-w-3xl mx-auto p-6 bg-primary text-white rounded-lg shadow-md pt-20 min-h-screen">
         <component 
             :is="currentComponent"
             :queue-id="queueId"
@@ -12,6 +12,7 @@
             @done="handleDone"
         />
     </div>
+    <MainFooter />
 </template>
 
 <script setup>
@@ -24,6 +25,7 @@ import ExportPreview from './ExportPreview.vue';
 import ExportDetails from './ExportDetails.vue';
 import { useRouter } from 'vue-router';
 import apiClient from '../api';
+import MainFooter from '../components/MainFooter.vue';
 
 const step = ref(0);
 const queueId = ref(null);
