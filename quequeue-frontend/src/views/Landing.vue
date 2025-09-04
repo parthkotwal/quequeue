@@ -121,10 +121,16 @@ const mlPreviewRef = ref(null)
 let observer = null
 
 onMounted(() => {
+  // Determine appropriate root margin based on screen size
+  const isMobile = window.innerHeight < 700
+  const rootMargin = isMobile ? '-20px' : '-100px'
+  
   // Set up Intersection Observer for scroll animations
   observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
+        console.log('Observer triggered:', entry.target.className, 'isIntersecting:', entry.isIntersecting)
+        
         if (entry.isIntersecting) {
           if (entry.target === walkthroughSection.value && queuePreviewRef.value) {
             queuePreviewRef.value.setVisible(true)
@@ -136,13 +142,35 @@ onMounted(() => {
         }
       })
     },
-    { threshold: 0.1, rootMargin: '-100px' }
+    { 
+      threshold: 0.1, 
+      rootMargin: rootMargin
+    }
   )
 
   // Observe sections
   if (walkthroughSection.value) observer.observe(walkthroughSection.value)
   if (mlSection.value) observer.observe(mlSection.value)
   if (problemsSection.value) observer.observe(problemsSection.value)
+
+  // Fallback for very small screens - show components after a delay
+  if (window.innerHeight < 500) {
+    setTimeout(() => {
+      console.log('Small screen fallback triggered')
+      if (problemsRef.value) {
+        console.log('Showing problems component')
+        problemsRef.value.setVisible(true)
+      }
+      if (queuePreviewRef.value) {
+        console.log('Showing queue preview component')  
+        queuePreviewRef.value.setVisible(true)
+      }
+      if (mlPreviewRef.value) {
+        console.log('Showing ML preview component')
+        mlPreviewRef.value.setVisible(true)
+      }
+    }, 1000)
+  }
 })
 
 
@@ -223,4 +251,14 @@ const getParticleStyle = (index) => {
     animation: none !important;
   }
 }
+
+@media (max-height: 400px) {
+  section[ref="problemsSection"],
+  section[ref="walkthroughSection"], 
+  section[ref="mlSection"] {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+}
+
 </style>
