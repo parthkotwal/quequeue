@@ -54,19 +54,21 @@ jobs:
           }
           EOL
 
-      # Step 6: Install EB CLI
-      - name: Install AWS Elastic Beanstalk CLI
-        run: pip install awsebcli
+      # Step 6: Package app
+      - name: Package Dockerrun.aws.json
+        run: |
+          rm -f deploy.zip
+          zip deploy.zip Dockerrun.aws.json
 
-      # Step 7: Deploy to Elastic Beanstalk
+      # Step 7: Deploy using AWS CLI
       - name: Deploy to Elastic Beanstalk
         run: |
-          zip deploy.zip Dockerrun.aws.json
-          eb init ${{ secrets.EB_APP_NAME }} \
-            --region ${{ secrets.AWS_REGION }} \
-            --platform "Docker" \
-            --verbose \
-            --no-verify-ssl \
-            --quiet
-          eb use ${{ secrets.EB_ENV_NAME }}
-          eb deploy --staged --debug --verbose
+          VERSION_LABEL=build-${GITHUB_SHA::8}
+          aws s3 cp deploy.zip s3://${{ secrets.EB_BUCKET }}/$VERSION_LABEL.zip
+          aws elasticbeanstalk create-application-version \
+            --application-name ${{ secrets.EB_APP_NAME }} \
+            --version-label $VERSION_LABEL \
+            --source-bundle S3Bucket=${{ secrets.EB_BUCKET }},S3Key=$VERSION_LABEL.zip
+          aws elasticbeanstalk update-environment \
+            --environment-name ${{ secrets.EB_ENV_NAME }} \
+            --version-label $VERSION_LABEL
