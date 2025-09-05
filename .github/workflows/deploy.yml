@@ -53,17 +53,13 @@ jobs:
           }
           EOL
 
-      # Step 6: Debug Dockerrun output
-      - name: Debug Dockerrun
-        run: cat Dockerrun.aws.json
-
-      # Step 7: Package app
+      # Step 6: Package app
       - name: Package Dockerrun.aws.json
         run: |
           rm -f deploy.zip
           zip deploy.zip Dockerrun.aws.json
 
-      # Step 8: Deploy using AWS CLI
+      # Step 7: Deploy using AWS CLI
       - name: Deploy to Elastic Beanstalk
         run: |
           VERSION_LABEL=build-${GITHUB_SHA::8}
