@@ -192,7 +192,7 @@ def export_queue(request):
             **track
         )
 
-    return JsonResponse({"message": "Queue exported to app successfully", "queue_id": new_queue.id})
+    return JsonResponse({"message": "Queue exported to app successfully!", "queue_id": new_queue.id})
 
 @csrf_exempt
 @require_http_methods(["POST"])
