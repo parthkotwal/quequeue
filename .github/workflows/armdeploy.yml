@@ -1,4 +1,4 @@
-name: Deploy Backend to Elastic Beanstalk
+name: Deploy Backend to ARM 64 Env Elastic Beanstalk
 
 on:
   push:
@@ -69,5 +69,5 @@ jobs:
             --version-label $VERSION_LABEL \
             --source-bundle S3Bucket=${{ secrets.EB_BUCKET }},S3Key=$VERSION_LABEL.zip
           aws elasticbeanstalk update-environment \
-            --environment-name ${{ secrets.EB_ENV_NAME }} \
+            --environment-name ${{ secrets.EB_ENV_NAME_ARM }} \
             --version-label $VERSION_LABEL
