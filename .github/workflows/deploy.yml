@@ -39,21 +39,19 @@ jobs:
       # Step 5: Generate Dockerrun.aws.json dynamically using jq (more robust)
       - name: Generate Dockerrun.aws.json
         run: |
-          jq -n \
-            --arg image_uri "$IMAGE_URI" \
-            '{
-              "AWSEBDockerrunVersion": 1,
-              "Image": {
-                "Name": $image_uri
-              },
-              "Ports": [
-                {
-                  "ContainerPort": 8000
-                }
-              ]
-            }' > Dockerrun.aws.json
-          # Verify the generated file
-          cat Dockerrun.aws.json
+          cat > Dockerrun.aws.json <<EOL
+          {
+            "AWSEBDockerrunVersion": "1",
+            "Image": {
+              "Name": "${IMAGE_URI}"
+            },
+            "Ports": [
+              {
+                "ContainerPort": "8000"
+              }
+            ]
+          }
+          EOL
 
       # Step 6: Debug Dockerrun output
       - name: Debug Dockerrun
