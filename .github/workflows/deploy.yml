@@ -62,5 +62,11 @@ jobs:
       - name: Deploy to Elastic Beanstalk
         run: |
           zip deploy.zip Dockerrun.aws.json
+          eb init ${{ secrets.EB_APP_NAME }} \
+            --region ${{ secrets.AWS_REGION }} \
+            --platform "Docker" \
+            --verbose \
+            --no-verify-ssl \
+            --quiet
           eb use ${{ secrets.EB_ENV_NAME }}
           eb deploy --staged --debug --verbose
