@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
-if os.environ.get("DJANGO_SETTINGS_ENV") != "production":
+if os.getenv("DJANGO_SETTINGS_ENV", "production") != "production":
     from dotenv import load_dotenv
     load_dotenv()
 
