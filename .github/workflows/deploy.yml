@@ -36,31 +36,35 @@ jobs:
           docker push $IMAGE_URI
           echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
-      # Step 5: Generate Dockerrun.aws.json dynamically
+      # Step 5: Generate Dockerrun.aws.json (flush-left JSON, no indentation!)
       - name: Generate Dockerrun.aws.json
         run: |
           cat > Dockerrun.aws.json <<EOL
-          {
-            "AWSEBDockerrunVersion": 1,
-            "Image": {
-              "Name": "${IMAGE_URI}",
-              "Update": "true"
-            },
-            "Ports": [
-              {
-                "ContainerPort": 8000
-              }
-            ]
-          }
-          EOL
+{
+  "AWSEBDockerrunVersion": 1,
+  "Image": {
+    "Name": "${IMAGE_URI}",
+    "Update": "true"
+  },
+  "Ports": [
+    {
+      "ContainerPort": 8000
+    }
+  ]
+}
+EOL
 
-      # Step 6: Package app
+      # Step 6: Debug Dockerrun output
+      - name: Debug Dockerrun
+        run: cat Dockerrun.aws.json
+
+      # Step 7: Package app
       - name: Package Dockerrun.aws.json
         run: |
           rm -f deploy.zip
           zip deploy.zip Dockerrun.aws.json
 
-      # Step 7: Deploy using AWS CLI
+      # Step 8: Deploy using AWS CLI
       - name: Deploy to Elastic Beanstalk
         run: |
           VERSION_LABEL=build-${GITHUB_SHA::8}
