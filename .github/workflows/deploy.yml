@@ -36,23 +36,25 @@ jobs:
           docker push $IMAGE_URI
           echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
-      # Step 5: Generate Dockerrun.aws.json (flush-left JSON, no indentation!)
+      # Step 5: Generate Dockerrun.aws.json dynamically using jq (more robust)
       - name: Generate Dockerrun.aws.json
         run: |
-          cat > Dockerrun.aws.json <<EOL
-{
-  "AWSEBDockerrunVersion": 1,
-  "Image": {
-    "Name": "${IMAGE_URI}",
-    "Update": "true"
-  },
-  "Ports": [
-    {
-      "ContainerPort": 8000
-    }
-  ]
-}
-EOL
+          jq -n \
+            --arg image_uri "$IMAGE_URI" \
+            '{
+              "AWSEBDockerrunVersion": 1,
+              "Image": {
+                "Name": $image_uri,
+                "Update": "true"
+              },
+              "Ports": [
+                {
+                  "ContainerPort": 8000
+                }
+              ]
+            }' > Dockerrun.aws.json
+          # Verify the generated file
+          cat Dockerrun.aws.json
 
       # Step 6: Debug Dockerrun output
       - name: Debug Dockerrun
