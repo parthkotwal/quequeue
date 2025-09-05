@@ -37,4 +37,4 @@ RUN pip install --no-cache-dir gunicorn
 # RUN python manage.py collectstatic --noinput
 
 # Run Gunicorn
-CMD ["gunicorn", "quequeue_project.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2"]
+CMD ["gunicorn", "quequeue_project.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "1"]
