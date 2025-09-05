@@ -1,8 +1,7 @@
 {
     "AWSEBDockerrunVersion": 1, 
     "Image": {
-        "Name": "442042531996.dkr.ecr.us-west-2.amazonaws.com/quequeue-backend:latest",
-        "Update": "true"
+        "Name": "442042531996.dkr.ecr.us-west-2.amazonaws.com/quequeue-backend:latest"
     },
     "Ports": [
         {

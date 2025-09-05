@@ -44,8 +44,7 @@ jobs:
             '{
               "AWSEBDockerrunVersion": 1,
               "Image": {
-                "Name": $image_uri,
-                "Update": "true"
+                "Name": $image_uri
               },
               "Ports": [
                 {
