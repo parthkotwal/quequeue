@@ -1,4 +1,4 @@
-name: Deploy Backend to ARM 64 Env Elastic Beanstalk
+name: Deploy Backend to x86-64 Env Elastic Beanstalk
 
 on:
   push:
