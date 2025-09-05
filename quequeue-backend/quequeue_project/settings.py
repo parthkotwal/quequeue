@@ -185,7 +185,7 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = False  # Set to True in production
 CSRF_COOKIE_SAMESITE = 'Lax'
 
-FRONTEND_URL =  "http://127.0.0.1:5173"
+FRONTEND_URL =  "https://quequeue-web.onrender.com"
 
 if DEBUG:
     SESSION_COOKIE_AGE = 3600  # 1 hour for development
