@@ -62,7 +62,7 @@ jobs:
       # Step 7: Deploy using AWS CLI
       - name: Deploy to Elastic Beanstalk
         run: |
-          VERSION_LABEL=build-${GITHUB_SHA::8}
+          VERSION_LABEL=build-${GITHUB_SHA::8}-$(date +%s)
           aws s3 cp deploy.zip s3://${{ secrets.EB_BUCKET }}/$VERSION_LABEL.zip
           aws elasticbeanstalk create-application-version \
             --application-name ${{ secrets.EB_APP_NAME }} \
