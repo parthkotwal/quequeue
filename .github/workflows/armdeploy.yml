@@ -60,14 +60,26 @@ jobs:
           zip deploy.zip Dockerrun.aws.json
 
       # Step 7: Deploy using AWS CLI
-      - name: Deploy to Elastic Beanstalk
+      - name: Create new EB application version
         run: |
           VERSION_LABEL=build-${GITHUB_SHA::8}-$(date +%s)
+          echo "VERSION_LABEL=$VERSION_LABEL" >> $GITHUB_ENV
           aws s3 cp deploy.zip s3://${{ secrets.EB_BUCKET }}/$VERSION_LABEL.zip
           aws elasticbeanstalk create-application-version \
             --application-name ${{ secrets.EB_APP_NAME }} \
             --version-label $VERSION_LABEL \
             --source-bundle S3Bucket=${{ secrets.EB_BUCKET }},S3Key=$VERSION_LABEL.zip
+
+      # Step 8: Update environment to use the new version
+      - name: Update EB environment
+        run: |
           aws elasticbeanstalk update-environment \
-            --environment-name ${{ secrets.EB_ENV_NAME_ARM }} \
+            --environment-name ${{ secrets.EB_ENV_NAME_X86 }} \
             --version-label $VERSION_LABEL
+
+      # Step 9: Wait for environment update to finish
+      - name: Wait for environment to be ready
+        run: |
+          aws elasticbeanstalk wait environment-updated \
+            --application-name ${{ secrets.EB_APP_NAME }} \
+            --environment-names ${{ secrets.EB_ENV_NAME_X86 }}

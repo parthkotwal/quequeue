@@ -186,7 +186,7 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = False  # Set to True in production
 CSRF_COOKIE_SAMESITE = 'Lax'
 
-FRONTEND_URL = "http://quequeue-frontend.s3-website-us-west-2.amazonaws.com/"
+FRONTEND_URL = "http://quequeue-frontend.s3-website-us-west-2.amazonaws.com"
 
 if DEBUG:
     SESSION_COOKIE_AGE = 3600  # 1 hour for development
