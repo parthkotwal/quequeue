@@ -1,7 +1,7 @@
 {
   "AWSEBDockerrunVersion": "1",
   "Image": {
-    "Name": "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-repo:f15e8dd4"
+    "Name": "442042531996.dkr.ecr.us-west-2.amazonaws.com/quequeue-backend:latest"
   },
   "Ports": [
     {
