@@ -65,11 +65,13 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://frontend:5173",
+    "https://quequeue.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://frontend:5173",
+    "https://quequeue.app",
 ]
 
 ROOT_URLCONF = 'quequeue_project.urls'
@@ -186,7 +188,7 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SECURE = False  # Set to True in production
 CSRF_COOKIE_SAMESITE = 'Lax'
 
-FRONTEND_URL = "http://quequeue-frontend.s3-website-us-west-2.amazonaws.com"
+FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 if DEBUG:
     SESSION_COOKIE_AGE = 3600  # 1 hour for development
