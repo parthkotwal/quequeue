@@ -98,7 +98,8 @@ def callback(request):
     request.session["user_display_name"] = display_name
     request.session.save()
 
-    return HttpResponseRedirect(f"{settings.FRONTEND_URL}/callback?status=ok")
+    return HttpResponseRedirect(f"{settings.FRONTEND_URL.rstrip('/')}/callback?status=ok")
+
 
 def login_required(view_func):
     @wraps(view_func)
