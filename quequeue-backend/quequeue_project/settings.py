@@ -66,12 +66,14 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://frontend:5173",
     "https://quequeue.app",
+    "https://api.quequeue.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://frontend:5173",
     "https://quequeue.app",
+    "https://api.quequeue.app",
 ]
 
 ROOT_URLCONF = 'quequeue_project.urls'
@@ -182,13 +184,16 @@ SESSION_COOKIE_AGE = 86400  # 24 hours
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_SAVE_EVERY_REQUEST = False 
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False 
+SESSION_COOKIE_SECURE = True 
 SESSION_COOKIE_SAMESITE = 'Lax'
 
-CSRF_COOKIE_SECURE = False  # Set to True in production
+
+CSRF_COOKIE_SECURE = True 
 CSRF_COOKIE_SAMESITE = 'Lax'
 
 FRONTEND_URL = os.getenv("FRONTEND_URL")
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if DEBUG:
     SESSION_COOKIE_AGE = 3600  # 1 hour for development
