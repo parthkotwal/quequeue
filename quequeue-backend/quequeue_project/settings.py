@@ -33,7 +33,13 @@ if os.getenv("DEBUG", "False").lower() in ("true", "1"):
 else:
     DEBUG = False
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = [
+    "quequeue.app",
+    "api.quequeue.app",
+    "quequeue-arm-env.us-west-2.elasticbeanstalk.com",
+    "localhost",
+    "127.0.0.1"
+]
 
 # Application definition
 
@@ -50,10 +56,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'queues.middleware.SessionDebugMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -194,6 +199,7 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 if DEBUG:
     SESSION_COOKIE_AGE = 3600  # 1 hour for development
