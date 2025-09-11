@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
@@ -41,6 +41,10 @@ FEATURE_COLUMNS = [
     'speechiness', 'acousticness', 'instrumentalness', 
     'liveness', 'valence', 'tempo', 'duration_ms', 'time_signature'
 ]
+
+def health(request):
+    return HttpResponse("OK", status=200)
+
 
 def login(request):
     params = {

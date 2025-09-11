@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path("health/", views.health),
+
     # LOGIN AND AUTHENTICATION
     path('login/', views.login),
     path('callback/', views.callback),
