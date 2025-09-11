@@ -36,7 +36,7 @@ else:
 ALLOWED_HOSTS = [
     "quequeue.app",
     "api.quequeue.app",
-    "quequeue-arm-env.us-west-2.elasticbeanstalk.com",
+    "quequeue-eb-env.us-west-2.elasticbeanstalk.com",
     "localhost",
     "127.0.0.1",
     "awseb--AWSEB-2clchIVPrqML-1040291112.us-west-2.elb.amazonaws.com"
