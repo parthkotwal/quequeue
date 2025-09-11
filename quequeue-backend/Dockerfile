@@ -32,9 +32,5 @@ EXPOSE 8080
 # Install Gunicorn
 RUN pip install --no-cache-dir gunicorn
 
-# Collect static files if using S3 or local
-# Uncomment if you configure STATIC_ROOT in settings.py
-# RUN python manage.py collectstatic --noinput
-
 # Run Gunicorn
 CMD ["gunicorn", "quequeue_project.wsgi:application", "--bind", "0.0.0.0:8080", "--workers", "3"]
