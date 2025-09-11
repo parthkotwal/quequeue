@@ -46,7 +46,10 @@ jobs:
               "Name": "${IMAGE_URI}"
             },
             "Ports": [
-              { "ContainerPort": 8080 }
+              {
+                "ContainerPort": "8080",
+                "HostPort": "80"
+              }
             ]
           }
           EOL

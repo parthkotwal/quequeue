@@ -4,6 +4,9 @@
     "Name": "442042531996.dkr.ecr.us-west-2.amazonaws.com/quequeue-backend:latest"
   },
   "Ports": [
-    { "ContainerPort": 8080 }
+    {
+      "ContainerPort": "8080",
+      "HostPort": "80"
+    }
   ]
 }
