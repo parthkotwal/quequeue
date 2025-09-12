@@ -49,12 +49,14 @@ import socket
 
 # Get the container's IP to allow ALB health checks
 try:
-    # This gets the container's internal IP which ALB uses
+    # Get the container's hostname and resolve its IP
     hostname = socket.gethostname()
-    internal_ip = socket.gethostbyname(hostname)
-    ALLOWED_HOSTS.append(internal_ip)
-except:
-    pass
+    container_ip = socket.gethostbyname(hostname)
+    ALLOWED_HOSTS.append(container_ip)
+    print(f"Added container IP to ALLOWED_HOSTS: {container_ip}")
+except Exception as e:
+    print(f"Could not resolve container IP: {e}")
+
 
 # Also allow common AWS internal IP ranges
 ALLOWED_HOSTS.extend([
@@ -77,6 +79,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'queues.middleware.HealthCheckMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
