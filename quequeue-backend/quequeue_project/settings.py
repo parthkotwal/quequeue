@@ -33,16 +33,35 @@ if os.getenv("DEBUG", "False").lower() in ("true", "1"):
 else:
     DEBUG = False
 
+
 ALLOWED_HOSTS = [
-    # "quequeue.app",
-    # "api.quequeue.app",
-    # "quequeue-eb-env.us-west-2.elasticbeanstalk.com",
-    # "localhost",
-    # "127.0.0.1",
-    # "awseb--AWSEB-2clchIVPrqML-1040291112.us-west-2.elb.amazonaws.com",
-    # '.elasticbeanstalk.com'
-    "*"
+    "quequeue.app",
+    "api.quequeue.app",
+    "quequeue-eb-env.us-west-2.elasticbeanstalk.com",
+    "localhost",
+    "127.0.0.1",
+    "awseb--AWSEB-2clchIVPrqML-1040291112.us-west-2.elb.amazonaws.com",
+    '.elasticbeanstalk.com'
+    # "*"
 ]
+
+import socket
+
+# Get the container's IP to allow ALB health checks
+try:
+    # This gets the container's internal IP which ALB uses
+    hostname = socket.gethostname()
+    internal_ip = socket.gethostbyname(hostname)
+    ALLOWED_HOSTS.append(internal_ip)
+except:
+    pass
+
+# Also allow common AWS internal IP ranges
+ALLOWED_HOSTS.extend([
+    "10.*.*.*",      # AWS VPC default range
+    "172.31.*.*",    # AWS default VPC range  
+    "172.16.*.*",    # Private IP range
+])
 
 # Application definition
 INSTALLED_APPS = [
