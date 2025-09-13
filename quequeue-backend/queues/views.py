@@ -27,7 +27,7 @@ from io import BytesIO
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_ME_URL = "https://api.spotify.com/v1/me"
-SCOPE = "user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read"
+SCOPE = "user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read streaming"
 
 ml_data = joblib.load("song_data/ml_bundle.joblib")
 DF:pd.DataFrame = ml_data['data']
@@ -132,6 +132,12 @@ def verify_auth(request):
         request.session.flush()
         return JsonResponse({"authenticated": False}, status=401)
     
+@login_required
+def get_token(request):
+    user = get_object_or_404(User, pk=request.session["user_id"])
+    return JsonResponse({
+        "access_token": user.access_token,
+    })
 
 @login_required
 def current_user(request):
