@@ -52,6 +52,7 @@ def login(request):
         "response_type": "code",
         "redirect_uri": settings.SPOTIFY_REDIRECT_URI,
         "scope": SCOPE,
+        "show_dialog": "true"
     }
     full_auth_url = f"{SPOTIFY_AUTH_URL}?{urllib.parse.urlencode(params)}"
     return HttpResponseRedirect(full_auth_url)
