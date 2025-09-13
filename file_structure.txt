@@ -1,9 +1,11 @@
 quequeue/
 ├── quequeue-backend/           # Django backend + data + configs
 │   ├── Dockerfile
+│   ├── Dockerrun.aws.json
 │   ├── .dockerignore
 │   ├── requirements.txt
 │   ├── .env
+│   ├── .ebextensions/
 │   ├── manage.py
 │   │
 │   ├── quequeue_project/       # Django project core

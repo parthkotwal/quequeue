@@ -162,6 +162,7 @@ def export_queue(request):
     user = User.objects.get(id=user_id)
     client = SpotifyClient(user)
     response = client.get("me/player/queue")
+    print(response)
     if response.status_code != 200:
         return JsonResponse({"error": "Failed to fetch queue"}, status=500)
     

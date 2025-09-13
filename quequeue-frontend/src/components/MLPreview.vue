@@ -177,10 +177,10 @@ const audioFeatures = [
 
 // Mock data for preview tracks
 const previewTracks = [
-  { id: 1, name: "9", cover: cover24 },
-  { id: 2, name: "Antidote", cover: cover26 },
-  { id: 3, name: "No Role Modelz", cover:cover172 },
-  { id: 4, name: "I Serve the Base", cover: cover262 },
+  { id: 1, name: "9", cover: "https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/frontend/24.webp" },
+  { id: 2, name: "Antidote", cover: "https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/frontend/26.webp" },
+  { id: 3, name: "No Role Modelz", cover:"https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/frontend/17_2.webp" },
+  { id: 4, name: "I Serve the Base", cover: "https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/frontend/26_2.webp" },
 ]
 
 // Mock data for recommended tracks
