@@ -158,6 +158,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import cover24 from '/src/assets/album_covers/24.webp'
+import cover26 from '/src/assets/album_covers/26.webp'
+import cover172 from '/src/assets/album_covers/17_2.webp'
+import cover262 from '/src/assets/album_covers/26_2.webp'
 
 const isVisible = ref(false)
 const currentStep = ref(0)
@@ -173,10 +177,10 @@ const audioFeatures = [
 
 // Mock data for preview tracks
 const previewTracks = [
-  { id: 1, name: "9", cover: "/src/assets/album_covers/24.webp" },
-  { id: 2, name: "Antidote", cover: "/src/assets/album_covers/26.webp" },
-  { id: 3, name: "No Role Modelz", cover: "/src/assets/album_covers/17_2.webp" },
-  { id: 4, name: "I Serve the Base", cover: "/src/assets/album_covers/26_2.webp" },
+  { id: 1, name: "9", cover: cover24 },
+  { id: 2, name: "Antidote", cover: cover26 },
+  { id: 3, name: "No Role Modelz", cover:cover172 },
+  { id: 4, name: "I Serve the Base", cover: cover262 },
 ]
 
 // Mock data for recommended tracks

@@ -177,6 +177,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import cover44 from '/src/assets/album_covers/44.webp'
+import cover45 from '/src/assets/album_covers/45.webp'
+import cover46 from '/src/assets/album_covers/46.webp'
+import cover47 from '/src/assets/album_covers/47.webp'
+import cover48 from '/src/assets/album_covers/48.webp'
+
 
 const spotifyLogo = '/src/assets/Primary_Logo_Green_RGB.svg'
 
@@ -184,10 +190,10 @@ const isVisible = ref(false)
 
 // Mock data for export queue
 const exportTracks = [
-  { id: 1, name: "Blinding Lights", artist: "The Weeknd", duration: "3:22", cover: "/src/assets/album_covers/44.webp" },
-  { id: 2, name: "Good 4 U", artist: "Olivia Rodrigo", duration: "2:58", cover: "/src/assets/album_covers/45.webp" },
-  { id: 3, name: "Levitating", artist: "Dua Lipa", duration: "3:23", cover: "/src/assets/album_covers/46.webp" },
-  { id: 4, name: "As It Was", artist: "Harry Styles", duration: "2:47", cover: "/src/assets/album_covers/47.webp" },
+  { id: 1, name: "Blinding Lights", artist: "The Weeknd", duration: "3:22", cover: cover44 },
+  { id: 2, name: "Good 4 U", artist: "Olivia Rodrigo", duration: "2:58", cover: cover45 },
+  { id: 3, name: "Levitating", artist: "Dua Lipa", duration: "3:23", cover: cover46 },
+  { id: 4, name: "As It Was", artist: "Harry Styles", duration: "2:47", cover: cover47 },
 ]
 
 // Mock data for saved queues (updated with more realistic data)
@@ -199,9 +205,9 @@ const savedQueues = [
 
 // Mock data for restore preview
 const restoreTracks = [
-  { id: 1, name: "Watermelon Sugar", cover: "/src/assets/album_covers/48.webp" },
-  { id: 2, name: "Don't Start Now", cover: "/src/assets/album_covers/46.webp" },
-  { id: 3, name: "Save Your Tears", cover: "/src/assets/album_covers/44.webp" },
+  { id: 1, name: "Watermelon Sugar", cover: cover48 },
+  { id: 2, name: "Don't Start Now", cover: cover46 },
+  { id: 3, name: "Save Your Tears", cover: cover44 },
 ]
 
 // Expose the visibility ref for parent component
