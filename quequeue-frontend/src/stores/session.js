@@ -23,32 +23,42 @@ export const useSessionStore = defineStore('session', {
             this.user = null
             this.isLoggedIn = false
         },
-        
+    
+        async logout() {
+            try {
+                await apiClient.post('/logout/');
+            } catch (error) {
+                console.warn("Logout request failed:", error);
+            } finally {
+                this.clearSession();
+            }
+        },
+    
         async initializeAuth() {
             if (this.hasInitialized) return;
             
-            this.isLoading = true
+            this.isLoading = true;
             try {
-                const response = await apiClient.get('/api/verify_auth/')
+                const response = await apiClient.get('/verify_auth/');
                 
                 if (response.ok) {
-                    const data = await response.json()
+                    const data = await response.json();
                     if (data.authenticated) {
                         this.setUser({
                             display_name: data.user_display_name,
-                        })
+                        });
                     } else {
-                        this.clearSession()
+                        this.clearSession();
                     }
                 } else {
-                    this.clearSession()
+                    this.clearSession();
                 }
             } catch (error) {
-                console.error('Auth verification failed:', error)
-                this.clearSession()
+                console.error('Auth verification failed:', error);
+                this.clearSession();
             } finally {
-                this.isLoading = false
-                this.hasInitialized = true
+                this.isLoading = false;
+                this.hasInitialized = true;
             }
         }
     },

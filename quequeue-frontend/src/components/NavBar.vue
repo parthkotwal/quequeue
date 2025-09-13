@@ -75,6 +75,13 @@
           >
             Spotify
           </a>
+          <RouterLink
+            to="/"
+            class="text-white font-inconsolata hover:text-accent transition whitespace-nowrap"
+            @click.prevent="handleLogout"
+          >
+            Logout
+          </RouterLink>
         </div>
       </transition>
     </div>
@@ -83,11 +90,21 @@
 
 <script setup>
 import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useSessionStore } from "../stores/session";
 
 const isOpen = ref(false);
+const router = useRouter();
+const session = useSessionStore();
 
 function toggleMenu() {
   isOpen.value = !isOpen.value;
+}
+
+async function handleLogout() {
+  await session.logout();
+  router.push("/login");   // send user to login page
+  isOpen.value = false;    // close dropdown
 }
 </script>
 
