@@ -10,7 +10,7 @@ urlpatterns = [
     path('verify_auth/', views.verify_auth),
     path('current_user/', views.current_user),
     path('get_token/', views.get_token),
-    path("logout/", views.logout),
+    path("logout/", views.logout_view),
 
     # PLAYBACK
     path('play_track/', views.play_track),

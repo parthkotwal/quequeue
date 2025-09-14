@@ -150,11 +150,9 @@ def current_user(request):
         "spotify_id": user.spotify_id,
     })
 
-from django.views.decorators.http import require_http_methods
-
 @login_required
 @require_http_methods(["POST"])
-def logout(request):
+def logout_view(request):
     """Log out the current user by clearing the session."""
     request.session.flush()
     return JsonResponse({"message": "Logged out successfully"})

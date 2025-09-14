@@ -102,7 +102,3 @@ function connectSpotify() {
   window.location.href = `${browserBaseURL}/login/`;
 }
 </script>
-
-<!-- <style scoped>
-/* Add any additional custom styles if needed */
-</style> -->
