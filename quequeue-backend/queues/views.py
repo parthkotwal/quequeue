@@ -252,7 +252,7 @@ def upload_image(request):
         return JsonResponse({"error": "Missing queue_id or image"}, status=400)
 
     filename = f"queue_covers/{uuid.uuid4()}_{image_file.name}"
-    content_type = "image/jpeg"
+    content_type = image_file.content_type or "image/jpeg"
 
     try:
         img = Image.open(image_file).convert("RGB")
@@ -281,8 +281,10 @@ def upload_image(request):
             }
         )
         image_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{filename}"
-        Queue.objects.filter(id=queue_id, user_id=user_id).update(image_url=image_url)
-
+        updated = Queue.objects.filter(id=queue_id, user_id=user_id).update(image_url=image_url)
+        if not updated:
+            return JsonResponse({"error": "Queue not found"}, status=404)
+        
         return JsonResponse({"image_url": image_url})
     
     except Exception as e:

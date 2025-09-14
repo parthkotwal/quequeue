@@ -30,3 +30,11 @@ const sessionStore = useSessionStore(pinia)
 sessionStore.initializeAuth().then(() => {
     app.mount('#app')
 })
+
+if (!document.getElementById('spotify-sdk')) {
+    const script = document.createElement('script')
+    script.id = 'spotify-sdk'
+    script.src = 'https://sdk.scdn.co/spotify-player.js'
+    script.async = true
+    document.body.appendChild(script)
+  }
