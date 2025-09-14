@@ -177,13 +177,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import cover44 from '/src/assets/album_covers/44.webp'
-import cover45 from '/src/assets/album_covers/45.webp'
-import cover46 from '/src/assets/album_covers/46.webp'
-import cover47 from '/src/assets/album_covers/47.webp'
 
-
-const spotifyLogo = '/src/assets/Primary_Logo_Green_RGB.svg'
+const spotifyLogo = 'https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/frontend/Primary_Logo_Green_RGB.svg'
 
 const isVisible = ref(false)
 

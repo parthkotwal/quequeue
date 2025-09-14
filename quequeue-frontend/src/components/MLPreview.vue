@@ -158,10 +158,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import cover24 from '/src/assets/album_covers/24.webp'
-import cover26 from '/src/assets/album_covers/26.webp'
-import cover172 from '/src/assets/album_covers/17_2.webp'
-import cover262 from '/src/assets/album_covers/26_2.webp'
 
 const isVisible = ref(false)
 const currentStep = ref(0)
@@ -189,7 +185,7 @@ const recommendedTracks = [
     id: 1, 
     name: "STARGAZING", 
     artist: "Travis Scott", 
-    cover: "/src/assets/album_covers/22.webp",
+    cover: "https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/frontend/22.webp",
     matchScore: 94,
     reasons: ['High Energy', 'Adlib Style']
   },
@@ -197,7 +193,7 @@ const recommendedTracks = [
     id: 2, 
     name: "Flashing Lights", 
     artist: "Kanye West", 
-    cover: "/src/assets/album_covers/13_2.webp",
+    cover: "https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/frontend/13_2.webp",
     matchScore: 92,
     reasons: ['Beautiful Synths', 'Top-Tier Hook']
   },
@@ -205,7 +201,7 @@ const recommendedTracks = [
     id: 3, 
     name: "Over My Dead Body", 
     artist: "Drake", 
-    cover: "/src/assets/album_covers/31.webp",
+    cover: "https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/frontend/31.webp",
     matchScore: 89,
     reasons: ['Melodic Rap', 'Night Vibe']
   }

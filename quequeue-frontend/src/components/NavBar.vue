@@ -103,7 +103,7 @@ function toggleMenu() {
 
 async function handleLogout() {
   await session.logout();
-  router.push("/login");   // send user to login page
+  router.push("/");
   isOpen.value = false;    // close dropdown
 }
 </script>
