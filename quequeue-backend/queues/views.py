@@ -85,6 +85,8 @@ def callback(request):
     user_resp = requests.get(SPOTIFY_ME_URL, headers=headers)
     user_data = user_resp.json()
 
+    print("Scopes:", token_data.get("scope"))
+
     spotify_id = user_data.get("id")
     display_name = user_data.get("display_name", "")
     token_expiration = now() + timedelta(seconds=expires_in)
