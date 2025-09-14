@@ -151,6 +151,7 @@ def current_user(request):
     })
 
 @login_required
+@csrf_exempt
 @require_http_methods(["POST"])
 def logout_view(request):
     """Log out the current user by clearing the session."""
