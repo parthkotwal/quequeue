@@ -85,7 +85,7 @@ def callback(request):
     user_resp = requests.get(SPOTIFY_ME_URL, headers=headers)
     user_data = user_resp.json()
 
-    print("Scopes:", token_data.get("scope"))
+    # print("Scopes:", token_data.get("scope"))
 
     spotify_id = user_data.get("id")
     display_name = user_data.get("display_name", "")
@@ -105,7 +105,7 @@ def callback(request):
     request.session["user_display_name"] = display_name
     request.session.save()
 
-    return HttpResponseRedirect(f"{settings.FRONTEND_URL.rstrip('/')}/callback?status=ok")
+    return HttpResponseRedirect(f"{settings.FRONTEND_URL.rstrip('/')}/auth-callback?status=ok")
 
 
 def login_required(view_func):
@@ -527,7 +527,6 @@ def restore_queue(request, queue_id: int):
             "details": failed
         }, status=500)
 
-    print(time.time() - start)
     return JsonResponse({
         "message": f"Restored {success} tracks to the queue.",
         "failures": failed if failed else None

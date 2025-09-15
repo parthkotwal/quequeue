@@ -9,6 +9,7 @@ import { useSessionStore } from './stores/session'
 
 import router from './router'
 import './style.css'
+import apiClient from './api'
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
@@ -41,7 +42,7 @@ async function setupSpotifyPlayer() {
     }
 
     try {
-        const res = await fetch('/api/get_token/', { credentials: 'include' })
+        const res = await apiClient.get('/get_token/')
         const { access_token } = await res.json()
         if (!access_token) throw new Error("No access token returned from backend")
 
