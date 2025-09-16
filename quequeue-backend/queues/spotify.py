@@ -12,7 +12,7 @@ class SpotifyClient:
         self.access_token = user.access_token
 
     def ensure_token(self):
-        if self.user.token_expires <= now():
+        if self.user.expiration_time <= now():
             self.refresh_token()
 
     def refresh_token(self):
@@ -36,7 +36,7 @@ class SpotifyClient:
             self.user.refresh_token = new_refresh
 
         expiration_time = token_data.get("expires_in", 3600)
-        self.user.token_expires = now() + timedelta(seconds=expiration_time)
+        self.user.expiration_time = now() + timedelta(seconds=expiration_time)
         self.user.save()
 
     def _headers(self, content_type="application/json"):
