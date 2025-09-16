@@ -72,13 +72,25 @@ export async function initSpotifyPlayer(initialToken) {
 
       player.addListener("authentication_error", ({ message }) => {
         console.error("Auth error:", message);
-        playerState.player = null; // Reset on error
+        // Clean up the player completely on auth error
+        if (playerState.player) {
+          playerState.player.disconnect();
+        }
+        playerState.player = null;
+        playerState.ready = false;
+        playerState.deviceId = null;
         reject(new Error(message));
       });
 
       player.addListener("account_error", ({ message }) => {
         console.error("Account error (Premium required):", message);
-        playerState.player = null; // Reset on error
+        // Clean up the player completely on account error
+        if (playerState.player) {
+          playerState.player.disconnect();
+        }
+        playerState.player = null;
+        playerState.ready = false;
+        playerState.deviceId = null;
         reject(new Error(message));
       });
 
@@ -104,8 +116,8 @@ export async function initSpotifyPlayer(initialToken) {
   });
 }
 
-// Manual transfer function
-export async function transferPlayback(play = false) {
+// Manual transfer function with better error handling
+export async function transferPlayback(play = false, waitForConfirmation = true) {
   if (!playerState.deviceId) {
     throw new Error("No device ID available");
   }
@@ -119,12 +131,88 @@ export async function transferPlayback(play = false) {
     });
 
     console.log("Playback transferred successfully", res.data);
+    
+    // Optionally wait for transfer to be confirmed
+    if (waitForConfirmation) {
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      while (attempts < maxAttempts) {
+        try {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const currentState = await apiClient.get('/current_playback/');
+          
+          if (currentState.data && currentState.data.device && 
+              currentState.data.device.id === playerState.deviceId && 
+              currentState.data.device.is_active) {
+            console.log("Transfer confirmed - device is now active");
+            break;
+          }
+        } catch (checkErr) {
+          console.warn("Error checking transfer status:", checkErr);
+        }
+        
+        attempts++;
+      }
+      
+      if (attempts >= maxAttempts) {
+        console.warn("Could not confirm transfer completion, but continuing anyway");
+      }
+    }
+    
     return res.data;
   } catch (err) {
     console.error("Failed to transfer playback:", err.response?.data || err.message);
     throw err;
   } finally {
     playerState.isTransferring = false;
+  }
+}
+
+// Helper function to ensure device is active before queue operations
+export async function ensureActiveDevice() {
+  if (!playerState.deviceId || !playerState.ready) {
+    throw new Error("Player not ready. Please wait for the player to initialize.");
+  }
+
+  try {
+    // Check if our device is already active
+    const currentStateRes = await apiClient.get('/current_playback/');
+    
+    if (currentStateRes.data && currentStateRes.data.device && 
+        currentStateRes.data.device.id === playerState.deviceId && 
+        currentStateRes.data.device.is_active) {
+      console.log("Device is already active");
+      return true;
+    }
+
+    // Transfer playback to our device if not active
+    console.log("Transferring playback to web player...");
+    await transferPlayback(false); // Don't auto-play
+    
+    // Wait a moment for transfer to complete
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return true;
+  } catch (err) {
+    console.error("Failed to ensure active device:", err);
+    throw err;
+  }
+}
+
+// Function to restore queue with proper device activation
+export async function restoreQueueWithDeviceCheck(queueData) {
+  try {
+    // First ensure our device is active
+    await ensureActiveDevice();
+    
+    // Now restore the queue
+    const res = await apiClient.post('/restore_queue/', queueData);
+    console.log("Queue restored successfully:", res.data);
+    return res.data;
+  } catch (err) {
+    console.error("Failed to restore queue:", err);
+    throw err;
   }
 }
 

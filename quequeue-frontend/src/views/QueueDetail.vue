@@ -146,6 +146,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import TrackList from '../components/TrackList.vue';
 import apiClient from '../api';
+import { ensureActiveDevice } from '../stores/player';
 import NavBar from '../components/NavBar.vue';
 import MainFooter from '../components/MainFooter.vue';
 
@@ -191,6 +192,7 @@ const fetchQueue = async () => {
 const restoreQueue = async () => {
     restoring.value = true
     try {
+        await ensureActiveDevice();
         const res = await apiClient.get(`/queue/${queueId}/restore/`)
         alert(res.data.message)
     } catch(err) {
