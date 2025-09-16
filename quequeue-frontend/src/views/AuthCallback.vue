@@ -20,13 +20,7 @@ try {
   // 1. Verify auth
   const res = await apiClient.get('/verify_auth/');
   
-  if (!res.ok) {
-    console.error("Auth verification failed");
-    router.push('/login');
-    return;
-  }
-
-  const data = await res.json();
+  const data = res.data;
   
   if (!data.authenticated) {
     console.error("User not authenticated");
@@ -42,13 +36,7 @@ try {
   // 3. Get fresh token for player
   const tokenRes = await apiClient.get('/get_token/');
   
-  if (!tokenRes.ok) {
-    console.error("Failed to get token");
-    router.push('/login');
-    return;
-  }
-
-  const tokenData = await tokenRes.json();
+  const tokenData = tokenRes.data;
   const { access_token } = tokenData;
 
   if (!access_token) {

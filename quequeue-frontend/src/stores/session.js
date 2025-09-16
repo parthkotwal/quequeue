@@ -41,15 +41,11 @@ export const useSessionStore = defineStore('session', {
             try {
                 const response = await apiClient.get('/verify_auth/');
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.authenticated) {
-                        this.setUser({
-                            display_name: data.user_display_name,
-                        });
-                    } else {
-                        this.clearSession();
-                    }
+                const data = response.data;
+                if (data.authenticated) {
+                    this.setUser({
+                        display_name: data.user_display_name,
+                    });
                 } else {
                     this.clearSession();
                 }

@@ -12,11 +12,7 @@ export const playerState = reactive({
 async function getFreshToken() {
   try {
     const res = await apiClient.get('/get_token/');
-    if (!res.ok) {
-      throw new Error('Failed to get token');
-    }
-    const data = await res.json();
-    return data.access_token;
+    return res.data.access_token;
   } catch (err) {
     console.error('Error fetching token:', err);
     throw err;
@@ -122,16 +118,10 @@ export async function transferPlayback(play = false) {
       play: play
     });
 
-    if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.error || "Transfer failed");
-    }
-
-    const data = await res.json();
-    console.log("Playback transferred successfully", data);
-    return data;
+    console.log("Playback transferred successfully", res.data);
+    return res.data;
   } catch (err) {
-    console.error("Failed to transfer playback:", err);
+    console.error("Failed to transfer playback:", err.response?.data || err.message);
     throw err;
   } finally {
     playerState.isTransferring = false;
