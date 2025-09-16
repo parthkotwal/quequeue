@@ -11,11 +11,11 @@ urlpatterns = [
     path('current_user/', views.current_user),
     path('get_token/', views.get_token),
     path("logout/", views.logout_view),
+    path('transfer_player/', views.transfer_player),
 
     # PLAYBACK
     path('play_track/', views.play_track),
     path('pause_track/', views.pause_track),
-    path('transfer_player', views.transfer_player),
 
     # EXPORT
     path('export_queue/', views.export_queue),
