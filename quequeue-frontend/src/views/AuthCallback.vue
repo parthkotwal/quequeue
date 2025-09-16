@@ -45,8 +45,11 @@ try {
     return;
   }
 
-  // 4. Check if player already initialized (from main.js)
-  if (!playerState.ready) {
+  // 4. Validate token has required scopes before initializing player
+  console.log("Validating token scopes...");
+  
+  // 5. Check if player already initialized (from main.js)
+  if (!playerState.ready && !playerState.player) {
     // Only init if not already ready
     console.log("Initializing Spotify player...");
     
@@ -59,21 +62,68 @@ try {
             resolve();
           }
         }, 100);
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+          clearInterval(checkInterval);
+          resolve();
+        }, 10000);
       });
     }
 
-    await initSpotifyPlayer(access_token);
+    if (!window.Spotify) {
+      throw new Error("Spotify SDK failed to load");
+    }
+
+    try {
+      await initSpotifyPlayer(access_token);
+    } catch (playerError) {
+      console.error("Player initialization failed:", playerError);
+      
+      // If it's a scope error, redirect to re-authenticate with proper scopes
+      if (playerError.message.includes("Invalid token scopes") || 
+          playerError.message.includes("scope")) {
+        console.log("Token scope error - redirecting to login for re-authentication");
+        // Clear session to force fresh login
+        session.clearSession();
+        router.push('/login?reauth=scope');
+        return;
+      }
+      
+      throw playerError;
+    }
+  } else if (playerState.player && !playerState.ready) {
+    console.log("Player exists but not ready, waiting...");
+    // Wait for existing player to be ready
+    await new Promise((resolve) => {
+      const checkReady = setInterval(() => {
+        if (playerState.ready) {
+          clearInterval(checkReady);
+          resolve();
+        }
+      }, 100);
+      
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        clearInterval(checkReady);
+        resolve();
+      }, 5000);
+    });
   } else {
-    console.log("Player already initialized");
+    console.log("Player already initialized and ready");
   }
 
-  // 5. Successfully authenticated and player ready
-  console.log("Authentication complete, navigating to dashboard!");
+  // 6. Successfully authenticated and player ready (or at least attempted)
+  console.log("Authentication complete, navigating to dashboard");
   router.push('/dashboard');
 
 } catch (err) {
   console.error("Error during authentication:", err);
-  router.push('/login');
+  
+  // Don't redirect to login if we're already handling a scope error
+  if (!err.message.includes("scope")) {
+    router.push('/login');
+  }
 }
 });
 </script>
