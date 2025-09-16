@@ -1,4 +1,5 @@
 import { reactive } from "vue";
+import apiClient from "../api";
 
 export const playerState = reactive({
   player: null,
@@ -6,7 +7,7 @@ export const playerState = reactive({
   ready: false,
 });
 
-export function initSpotifyPlayer(token) {
+export async function initSpotifyPlayer(token) {
   return new Promise((resolve, reject) => {
     function createPlayer() {
       const player = new window.Spotify.Player({
@@ -15,11 +16,28 @@ export function initSpotifyPlayer(token) {
         volume: 0.5,
       });
 
-      player.addListener("ready", ({ device_id }) => {
+      player.addListener("ready", async ({ device_id }) => {
         console.log("Player ready with device ID", device_id);
         playerState.deviceId = device_id;
         playerState.ready = true;
         playerState.player = player;
+
+        // 🔑 Immediately tell backend to transfer playback
+        try {
+          const res = await apiClient.post("/transfer_player/", {
+            device_id: device_id,
+          });
+
+          if (!res.ok) {
+            const err = await res.json();
+            console.error("Failed to transfer playback:", err);
+          } else {
+            console.log("Playback transferred successfully");
+          }
+        } catch (err) {
+          console.error("Error calling transfer_player:", err);
+        }
+
         resolve(device_id);
       });
 

@@ -136,11 +136,23 @@ def verify_auth(request):
         return JsonResponse({"authenticated": False}, status=401)
     
 @login_required
+@require_http_methods(["GET"])
 def get_token(request):
-    user = get_object_or_404(User, pk=request.session["user_id"])
-    return JsonResponse({
-        "access_token": user.access_token,
-    })
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    user = get_object_or_404(User, id=user_id)
+    try:
+        client = SpotifyClient(user)
+        client.ensure_token()
+
+        return JsonResponse({
+            "access_token": client.access_token,
+            "expires_at": user.token_expires.isoformat(),
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
 
 @login_required
 def current_user(request):
@@ -488,6 +500,38 @@ def pause_track(request):
     else:
         return JsonResponse({"error": "Failed to pause playback"}, status=response.status_code)
 
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def transfer_player(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    user = get_object_or_404(User, id=user_id)
+    data = json.loads(request.body.decode("utf-8"))
+    device_id = data.get("device_id")
+
+    if not device_id:
+        return JsonResponse({"error": "Missing device_id"}, status=400)
+
+    try:
+        client = SpotifyClient(user)
+        resp = client.put("me/player", data={
+            "device_ids": [device_id],
+            "play": True,
+        })
+
+        if resp.status_code not in (200, 204):
+            return JsonResponse({
+                "error": "Spotify API error",
+                "status_code": resp.status_code,
+                "response": resp.json()
+            }, status=resp.status_code)
+
+        return JsonResponse({"status": "success"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
 
 
 @require_http_methods(["GET"])
