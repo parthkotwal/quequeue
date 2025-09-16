@@ -27,15 +27,19 @@ export async function initSpotifyPlayer(token) {
           const res = await apiClient.post("/transfer_player/", {
             device_id: device_id,
           });
-
-          if (!res.ok) {
-            const err = await res.json();
-            console.error("Failed to transfer playback:", err);
-          } else {
-            console.log("Playback transferred successfully");
-          }
+        
+          console.log("Playback transferred successfully", res.data);
         } catch (err) {
-          console.error("Error calling transfer_player:", err);
+          if (err.response) {
+            // Server responded with a non-2xx code
+            console.error("Failed to transfer playback:", err.response.data);
+          } else if (err.request) {
+            // No response from server
+            console.error("No response received:", err.request);
+          } else {
+            // Something else happened
+            console.error("Error calling transfer_player:", err.message);
+          }
         }
 
         resolve(device_id);

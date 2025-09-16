@@ -27,7 +27,13 @@ from io import BytesIO
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_ME_URL = "https://api.spotify.com/v1/me"
-SCOPE = "user-read-playback-state user-modify-playback-state user-read-currently-playing user-library-read streaming"
+REQUIRED_SCOPES = {
+    "user-read-playback-state",
+    "user-modify-playback-state",
+    "user-read-currently-playing",
+    "user-library-read",
+    "streaming"
+}
 
 ml_data = joblib.load("song_data/ml_bundle.joblib")
 DF:pd.DataFrame = ml_data['data']
@@ -85,7 +91,9 @@ def callback(request):
     user_resp = requests.get(SPOTIFY_ME_URL, headers=headers)
     user_data = user_resp.json()
 
-    print("Scopes:", token_data.get("scope"))
+    granted_scopes = set(token_data.get("scope", "").split())
+    if not REQUIRED_SCOPES.issubset(granted_scopes):
+        print(granted_scopes)
 
     spotify_id = user_data.get("id")
     display_name = user_data.get("display_name", "")
