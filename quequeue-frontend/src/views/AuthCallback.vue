@@ -68,7 +68,7 @@ try {
   }
 
   // 5. Successfully authenticated and player ready
-  console.log("Authentication complete, navigating to dashboard");
+  console.log("Authentication complete, navigating to dashboard!");
   router.push('/dashboard');
 
 } catch (err) {
