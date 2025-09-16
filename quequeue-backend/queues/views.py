@@ -57,7 +57,7 @@ def login(request):
         "client_id": settings.SPOTIFY_CLIENT_ID,
         "response_type": "code",
         "redirect_uri": settings.SPOTIFY_REDIRECT_URI,
-        "scope": REQUIRED_SCOPES,
+        "scope": " ".join(REQUIRED_SCOPES),
         "show_dialog": "true"
     }
     full_auth_url = f"{SPOTIFY_AUTH_URL}?{urllib.parse.urlencode(params)}"
