@@ -32,7 +32,9 @@ REQUIRED_SCOPES = {
     "user-modify-playback-state",
     "user-read-currently-playing",
     "user-library-read",
-    "streaming"
+    "streaming",
+    "user-read-email", 
+    "user-read-private"
 }
 
 ml_data = joblib.load("song_data/ml_bundle.joblib")
