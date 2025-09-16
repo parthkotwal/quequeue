@@ -85,7 +85,7 @@ def callback(request):
     user_resp = requests.get(SPOTIFY_ME_URL, headers=headers)
     user_data = user_resp.json()
 
-    # print("Scopes:", token_data.get("scope"))
+    print("Scopes:", token_data.get("scope"))
 
     spotify_id = user_data.get("id")
     display_name = user_data.get("display_name", "")
@@ -164,6 +164,39 @@ def current_user(request):
         "spotify_id": user.spotify_id,
     })
 
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def transfer_player(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    user = get_object_or_404(User, id=user_id)
+    data = json.loads(request.body.decode("utf-8"))
+    device_id = data.get("device_id")
+
+    if not device_id:
+        return JsonResponse({"error": "Missing device_id"}, status=400)
+
+    try:
+        client = SpotifyClient(user)
+        resp = client.put("me/player", data={
+            "device_ids": [device_id],
+            "play": True,
+        })
+
+        if resp.status_code not in (200, 204):
+            return JsonResponse({
+                "error": "Spotify API error",
+                "status_code": resp.status_code,
+                "response": resp.json()
+            }, status=resp.status_code)
+
+        return JsonResponse({"status": "success"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
 @login_required
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -191,7 +224,6 @@ def export_queue(request):
     user = User.objects.get(id=user_id)
     client = SpotifyClient(user)
     response = client.get("me/player/queue")
-    print(response)
     if response.status_code != 200:
         return JsonResponse({"error": "Failed to fetch queue"}, status=500)
     
@@ -500,39 +532,6 @@ def pause_track(request):
     else:
         return JsonResponse({"error": "Failed to pause playback"}, status=response.status_code)
 
-@csrf_exempt
-@require_http_methods(["POST"])
-@login_required
-def transfer_player(request):
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return JsonResponse({"error": "Not authenticated"}, status=401)
-
-    user = get_object_or_404(User, id=user_id)
-    data = json.loads(request.body.decode("utf-8"))
-    device_id = data.get("device_id")
-
-    if not device_id:
-        return JsonResponse({"error": "Missing device_id"}, status=400)
-
-    try:
-        client = SpotifyClient(user)
-        resp = client.put("me/player", data={
-            "device_ids": [device_id],
-            "play": True,
-        })
-
-        if resp.status_code not in (200, 204):
-            return JsonResponse({
-                "error": "Spotify API error",
-                "status_code": resp.status_code,
-                "response": resp.json()
-            }, status=resp.status_code)
-
-        return JsonResponse({"status": "success"})
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
-
 
 @require_http_methods(["GET"])
 def restore_queue(request, queue_id: int):
@@ -653,7 +652,7 @@ def suggest(request, queue_id:int):
 
     # predict cluster
     cluster_id = int(KMEANS.predict(scaled_vector)[0])
-    print(f"Cluster: {cluster_id}")
+    # print(f"Cluster: {cluster_id}")
 
     # filter dataset to this cluster
     candidate_indices = np.where(KMEANS.labels_ == cluster_id)[0]

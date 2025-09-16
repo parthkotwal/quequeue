@@ -15,6 +15,7 @@ urlpatterns = [
     # PLAYBACK
     path('play_track/', views.play_track),
     path('pause_track/', views.pause_track),
+    path('transfer_player', views.transfer_player),
 
     # EXPORT
     path('export_queue/', views.export_queue),
