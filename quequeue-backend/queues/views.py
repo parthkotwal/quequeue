@@ -149,7 +149,7 @@ def get_token(request):
 
         return JsonResponse({
             "access_token": client.access_token,
-            "expires_at": user.token_expires.isoformat(),
+            "expires_at": user.expiration_time.isoformat(),
         })
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
