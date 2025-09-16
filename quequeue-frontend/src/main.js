@@ -4,12 +4,10 @@ import App from './App.vue'
 
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate"
-import { initSpotifyPlayer } from './stores/player'
 import { useSessionStore } from './stores/session'
 
 import router from './router'
 import './style.css'
-import apiClient from './api'
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
@@ -29,37 +27,18 @@ router.afterEach((to) => {
 
 const sessionStore = useSessionStore(pinia)
 
-// Helper function to initialize Spotify player if authenticated
-async function setupSpotifyPlayer() {
-    if (!sessionStore.isLoggedIn) {
-        console.log("User not logged in, skipping player init")
-        return
-    }
+// Only load SDK, don't init player here
+// Player will be initialized in AuthCallback after successful login
+// or in a dedicated component when needed
 
-    if (!window.Spotify) {
-        console.warn("Spotify SDK not loaded yet")
-        return
-    }
-
-    try {
-        const res = await apiClient.get('/get_token/')
-        const { access_token } = await res.json()
-        if (!access_token) throw new Error("No access token returned from backend")
-
-        await initSpotifyPlayer(access_token)
-        console.log("Spotify player initialized")
-    } catch (err) {
-        console.error("Failed to initialize Spotify player:", err)
-    }
-}
-
-// 1️. Define SDK ready callback BEFORE loading the script
+// 1. Define SDK ready callback (empty - just logs)
 window.onSpotifyWebPlaybackSDKReady = () => {
-    console.log("Spotify SDK ready")
-    setupSpotifyPlayer()
+    console.log("Spotify SDK loaded and ready")
+    // Don't auto-init player here anymore
+    // Let AuthCallback or user action trigger it
 }
 
-// 2️. Load the Spotify Web Playback SDK
+// 2. Load the Spotify Web Playback SDK
 if (!document.getElementById('spotify-sdk')) {
     const script = document.createElement('script')
     script.id = 'spotify-sdk'
@@ -68,12 +47,13 @@ if (!document.getElementById('spotify-sdk')) {
     document.body.appendChild(script)
 }
 
-// 3️. Initialize session, then mount app
-sessionStore.initializeAuth().then(async () => {
+// 3. Initialize session, then mount app
+sessionStore.initializeAuth().then(() => {
     app.mount('#app')
-
-    // If SDK already loaded, init player immediately
-    if (window.Spotify && sessionStore.isLoggedIn) {
-        await setupSpotifyPlayer()
+    
+    // If user is already logged in and on a page that needs player,
+    // that page component should handle player initialization
+    if (sessionStore.isLoggedIn) {
+        console.log("User is logged in, player can be initialized when needed")
     }
 })
