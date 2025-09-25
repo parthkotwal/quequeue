@@ -582,6 +582,12 @@ def restore_queue(request, queue_id: int):
     client = SpotifyClient(user)
     track_uris = [t.track_uri for t in tracks]
 
+    def get_json_or_text(response):
+        try:
+            return response.json()
+        except json.JSONDecodeError:
+            return response.text
+
     # 1. Start playback with the first track
     # The 'play' endpoint can accept a list of URIs, but we'll start with the first one
     # to ensure playback begins correctly.
@@ -591,7 +597,7 @@ def restore_queue(request, queue_id: int):
         # The frontend's ensureActiveDevice() should prevent this, but we double-check.
         return JsonResponse({
             "error": "Failed to start playback. Please start playing music on a Spotify device first.",
-            "details": play_response.json() if play_response.content else "No content"
+            "details": get_json_or_text(play_response)
         }, status=play_response.status_code)
     
     # 2. Queue the rest of the tracks (if any)
