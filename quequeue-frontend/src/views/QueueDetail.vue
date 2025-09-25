@@ -205,8 +205,8 @@ const restoreQueue = async () => {
 const updateQueue = async () => {
     try {
         await apiClient.patch(`/queue/${queueId}/update/`, {
-        name: editForm.value.name,
-        description: editForm.value.description
+            name: editForm.value.name,
+            description: editForm.value.description
         })
         alert("Queue updated successfully")
         showEditModal.value = false

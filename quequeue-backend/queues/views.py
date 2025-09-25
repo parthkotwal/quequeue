@@ -592,6 +592,7 @@ def restore_queue(request, queue_id: int):
     # The 'play' endpoint can accept a list of URIs, but we'll start with the first one
     # to ensure playback begins correctly.
     play_response = client.put("me/player/play", json={"uris": [track_uris[0]]})
+    print(get_json_or_text(play_response))
     if play_response.status_code not in {200, 202, 204}:
         # Attempting to play failed, likely no active device.
         # The frontend's ensureActiveDevice() should prevent this, but we double-check.
@@ -603,11 +604,16 @@ def restore_queue(request, queue_id: int):
     # 2. Queue the rest of the tracks (if any)
     failures = []
     success_count = 1  # The first track was a success
+    t = 1
     if len(track_uris) > 1:
         for uri in track_uris[1:]:
             # Use a short delay to help Spotify process the requests in order
             time.sleep(0.2)
             queue_response = client.post("me/player/queue", params={"uri": uri})
+            if t > 5:
+                print(get_json_or_text(queue_response))
+                t += 1
+
             if queue_response.status_code in {200, 204}:
                 success_count += 1
             else:
@@ -616,6 +622,8 @@ def restore_queue(request, queue_id: int):
                     "status": queue_response.status_code,
                     "error": queue_response.json() if queue_response.content else "No content"
                 })
+
+    print(failures)
 
     return JsonResponse({
         "message": f"Restored {success_count} of {len(track_uris)} tracks.",
