@@ -206,6 +206,27 @@ def transfer_player(request):
         return JsonResponse({"status": "success"})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+    
+@login_required
+@require_http_methods(["GET"])
+def current_playback(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    user = get_object_or_404(User, id=user_id)
+    client = SpotifyClient(user)
+    
+    # This Spotify endpoint gets the user's current playback state
+    response = client.get("me/player")
+
+    if response.status_code == 200:
+        return JsonResponse(response.json())
+    elif response.status_code == 204:
+        # 204 No Content means nothing is playing
+        return JsonResponse({}, status=200)
+    else:
+        return JsonResponse(response.json(), status=response.status_code)
 
 @login_required
 @csrf_exempt
@@ -545,7 +566,8 @@ def pause_track(request):
 
 @require_http_methods(["GET"])
 def restore_queue(request, queue_id: int):
-    start = time.time()
+    # start = time.time()
+
     user_id = request.session.get("user_id")
     if not user_id:
         return JsonResponse({"error": "Not authenticated"}, status=401)
@@ -557,33 +579,43 @@ def restore_queue(request, queue_id: int):
     if not tracks:
         return JsonResponse({"error": "Queue is empty"}, status=400)
 
-    success = 0
-    failed = []
-
     client = SpotifyClient(user)
+    track_uris = [t.track_uri for t in tracks]
 
-    for track in tracks:
-        uri = track.track_uri
-        response = client.post("me/player/queue", params={"uri": uri})
-        if response.status_code in {204, 200}:
-            success += 1
-        else:
-            failed.append({
-                "track": track.track_name,
-                "uri": uri,
-                "error": response.text
-            })
-
-    if success == 0:
+    # 1. Start playback with the first track
+    # The 'play' endpoint can accept a list of URIs, but we'll start with the first one
+    # to ensure playback begins correctly.
+    play_response = client.put("me/player/play", json={"uris": [track_uris[0]]})
+    if play_response.status_code not in {200, 202, 204}:
+        # Attempting to play failed, likely no active device.
+        # The frontend's ensureActiveDevice() should prevent this, but we double-check.
         return JsonResponse({
-            "error": "Failed to queue any tracks.",
-            "details": failed
-        }, status=500)
+            "error": "Failed to start playback. Please start playing music on a Spotify device first.",
+            "details": play_response.json() if play_response.content else "No content"
+        }, status=play_response.status_code)
+    
+    # 2. Queue the rest of the tracks (if any)
+    failures = []
+    success_count = 1  # The first track was a success
+    if len(track_uris) > 1:
+        for uri in track_uris[1:]:
+            # Use a short delay to help Spotify process the requests in order
+            time.sleep(0.2)
+            queue_response = client.post("me/player/queue", params={"uri": uri})
+            if queue_response.status_code in {200, 204}:
+                success_count += 1
+            else:
+                failures.append({
+                    "uri": uri,
+                    "status": queue_response.status_code,
+                    "error": queue_response.json() if queue_response.content else "No content"
+                })
 
     return JsonResponse({
-        "message": f"Restored {success} tracks to the queue.",
-        "failures": failed if failed else None
-    }, status=207 if failed else 200)
+        "message": f"Restored {success_count} of {len(track_uris)} tracks.",
+        "failures": failures if failures else None
+    }, status=207 if failures else 200)
+
 
 
 
