@@ -41,8 +41,8 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "awseb--AWSEB-2clchIVPrqML-1040291112.us-west-2.elb.amazonaws.com",
-    '.elasticbeanstalk.com'
-    # "*"
+    '.elasticbeanstalk.com',
+    "*"
 ]
 
 import socket

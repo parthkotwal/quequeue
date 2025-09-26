@@ -570,103 +570,106 @@ logger = logging.getLogger(__name__)
 def restore_queue(request, queue_id: int):
     start = time.time()
     logger.info(f"Starting restore_queue for queue_id: {queue_id}")
-    
+
     try:
         # Authentication check
         user_id = request.session.get("user_id")
         if not user_id:
             logger.warning(f"Unauthenticated request for queue_id: {queue_id}")
             return JsonResponse({"error": "Not authenticated"}, status=401)
-        
+
         logger.info(f"User {user_id} requesting restore for queue {queue_id}")
-        
+
         # Get user and queue
         user = get_object_or_404(User, id=user_id)
         queue = get_object_or_404(Queue, id=queue_id, user=user)
-        logger.info(f"Found queue '{queue}' for user '{user.username if hasattr(user, 'username') else user_id}'")
-        
+        logger.info(f"Found queue '{queue}' for user '{getattr(user, 'username', user_id)}'")
+
         # Get tracks
         tracks = list(queue.tracks.order_by("position"))
-        track_count = len(tracks)
-        logger.info(f"Queue has {track_count} tracks")
-        
         if not tracks:
             logger.warning(f"Queue {queue_id} is empty")
             return JsonResponse({"error": "Queue is empty"}, status=400)
-        
-        # Initialize Spotify client
-        client = SpotifyClient(user)
+
         track_uris = [t.track_uri for t in tracks]
-        logger.info(f"Extracted {len(track_uris)} track URIs")
-        
-        def get_json_or_text(response):
+        logger.info(f"Queue has {len(track_uris)} tracks")
+
+        # Initialize Spotify client and ensure token
+        client = SpotifyClient(user)
+        client.ensure_token()
+
+        def safe_json(response):
             try:
                 return response.json()
-            except json.JSONDecodeError:
-                return response.text
-        
+            except Exception:
+                return response.text or None
+
         # 1. Start playback with the first track
-        logger.info(f"Starting playback with first track: {track_uris[0]}")
-        play_response = client.put("me/player/play", json={"uris": [track_uris[0]]})
-        
-        logger.info(f"Play response status: {play_response.status_code}")
-        logger.debug(f"Play response content: {get_json_or_text(play_response)}")
-        
-        if play_response.status_code not in {200, 202, 204}:
-            logger.error(f"Failed to start playback. Status: {play_response.status_code}, Response: {get_json_or_text(play_response)}")
-            return JsonResponse({
-                "error": "Failed to start playback. Please start playing music on a Spotify device first.",
-                "details": get_json_or_text(play_response)
-            }, status=play_response.status_code)
-        
+        first_uri = track_uris[0]
+        logger.info(f"Starting playback with first track: {first_uri}")
+        play_response = client.put("me/player/play", data={"uris": [first_uri]})
+
+        if play_response.status_code not in {200, 204}:
+            logger.error(
+                f"Failed to start playback. Status={play_response.status_code}, "
+                f"Response={safe_json(play_response)}"
+            )
+            return JsonResponse(
+                {
+                    "error": "Failed to start playback. Please start playing music on a Spotify device first.",
+                    "details": safe_json(play_response),
+                },
+                status=play_response.status_code,
+            )
+
         logger.info("Successfully started playback with first track")
-        
-        # 2. Queue the rest of the tracks (if any)
+
+        # 2. Queue the rest of the tracks
         failures = []
-        success_count = 1  # The first track was a success
-        
-        if len(track_uris) > 1:
-            logger.info(f"Queueing remaining {len(track_uris) - 1} tracks")
-            
-            for i, uri in enumerate(track_uris[1:], start=2):
-                logger.debug(f"Queueing track {i}/{len(track_uris)}: {uri}")
-                
-                # Use a short delay to help Spotify process the requests in order
-                time.sleep(0.2)
-                queue_response = client.post("me/player/queue", params={"uri": uri})
-                
-                logger.debug(f"Queue response for track {i}: status={queue_response.status_code}")
-                
-                if queue_response.status_code in {200, 204}:
-                    success_count += 1
-                    logger.debug(f"Successfully queued track {i}")
-                else:
-                    error_details = {
-                        "uri": uri,
-                        "status": queue_response.status_code,
-                        "error": queue_response.json() if queue_response.content else "No content"
-                    }
-                    failures.append(error_details)
-                    logger.warning(f"Failed to queue track {i}: {error_details}")
-        
+        success_count = 1
+
+        for i, uri in enumerate(track_uris[1:], start=2):
+            logger.debug(f"Queueing track {i}/{len(track_uris)}: {uri}")
+            time.sleep(0.2)
+            queue_response = client.post("me/player/queue", params={"uri": uri})
+
+            if queue_response.status_code in {200, 204}:
+                success_count += 1
+                logger.debug(f"Successfully queued track {i}")
+            else:
+                error_details = {
+                    "uri": uri,
+                    "status": queue_response.status_code,
+                    "error": safe_json(queue_response),
+                }
+                failures.append(error_details)
+                logger.warning(f"Failed to queue track {i}: {error_details}")
+
         # Log final results
         elapsed_time = time.time() - start
-        logger.info(f"Restore completed in {elapsed_time:.2f}s: {success_count}/{len(track_uris)} tracks successful, {len(failures)} failures")
-        
+        logger.info(
+            f"Restore completed in {elapsed_time:.2f}s: "
+            f"{success_count}/{len(track_uris)} tracks successful, {len(failures)} failures"
+        )
+
+        response_data = {
+            "message": f"Restored {success_count} of {len(track_uris)} tracks."
+        }
         if failures:
-            logger.warning(f"Failures occurred: {failures}")
-        
-        return JsonResponse({
-            "message": f"Restored {success_count} of {len(track_uris)} tracks.",
-            "failures": failures if failures else None
-        }, status=207 if failures else 200)
-        
+            response_data["failures"] = failures
+
+        return JsonResponse(response_data, status=207 if failures else 200)
+
     except Exception as e:
         elapsed_time = time.time() - start
-        logger.error(f"Unexpected error in restore_queue after {elapsed_time:.2f}s: {str(e)}", exc_info=True)
-        return JsonResponse({
-            "error": "An unexpected error occurred while restoring the queue"
-        }, status=500)
+        logger.error(
+            f"Unexpected error in restore_queue after {elapsed_time:.2f}s: {e}",
+            exc_info=True,
+        )
+        return JsonResponse(
+            {"error": "An unexpected error occurred while restoring the queue"},
+            status=500,
+        )
 
 
 
