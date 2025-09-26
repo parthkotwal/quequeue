@@ -109,6 +109,39 @@
                 </div>
             </div>
             </div>
+
+            <!-- Restore Success Modal -->
+            <div v-if="showRestoreSuccessModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div class="bg-primary p-6 rounded w-full max-w-md text-white">
+                <div class="text-center">
+                <!-- Success Icon -->
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-silkscreen mb-2 text-green-400">Queue Restored!</h3>
+                <p class="text-secondaryText mb-6">Your queue has been successfully added to Spotify. Check it out in your Spotify app!</p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button 
+                    @click="openSpotifyQueue" 
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-silkscreen transition-colors duration-200 flex items-center justify-center gap-2"
+                    >
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.42 1.56-.299.421-1.02.599-1.559.3z"/>
+                    </svg>
+                    Open Spotify
+                    </button>
+                    <button 
+                    @click="showRestoreSuccessModal = false" 
+                    class="px-4 py-2 rounded border border-divider font-silkscreen hover:bg-divider transition-colors duration-200"
+                    >
+                    Close
+                    </button>
+                </div>
+                </div>
+            </div>
+            </div>
     
             <!-- Suggest Modal -->
             <div v-if="showSuggestModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -160,6 +193,7 @@ const restoring = ref(false)
 const error = ref(null)
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
+const showRestoreSuccessModal = ref(false)
 
 const suggestAvailable = ref(false);
 const showSuggestModal = ref(false);
@@ -192,15 +226,33 @@ const fetchQueue = async () => {
 const restoreQueue = async () => {
     restoring.value = true
     try {
-        // Don’t force the web player — just enqueue on whatever device is active
+        // Don't force the web player — just enqueue on whatever device is active
         await ensureActiveDevice({ forceWebPlayer: false });
         const res = await apiClient.get(`/queue/${queueId}/restore/`);
-        alert(res.data.message);
+        showRestoreSuccessModal.value = true;
     } catch(err) {
         alert("Restore failed: " + (err.response?.data?.error || err.message));
     } finally {
         restoring.value = false
     }
+}
+
+const openSpotifyQueue = () => {
+    // Try to open Spotify app first, fallback to web player
+    const spotifyAppUrl = 'spotify:queue';
+    const spotifyWebUrl = 'https://open.spotify.com/queue';
+    
+    // Create a temporary link to try opening the app
+    const link = document.createElement('a');
+    link.href = spotifyAppUrl;
+    link.click();
+    
+    // Fallback to web after a short delay if app didn't open
+    setTimeout(() => {
+        window.open(spotifyWebUrl, '_blank');
+    }, 1000);
+    
+    showRestoreSuccessModal.value = false;
 }
 
 const updateQueue = async () => {
