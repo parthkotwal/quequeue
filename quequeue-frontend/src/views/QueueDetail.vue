@@ -231,9 +231,11 @@ const restoreQueue = async () => {
         const res = await apiClient.get(`/queue/${queueId}/restore/`);
         showRestoreSuccessModal.value = true;
     } catch(err) {
-        alert("Restore failed: " + (err.response?.data?.error || err.message));
-    } finally {
-        restoring.value = false
+        if (err.response?.data?.error === "NO_ACTIVE_DEVICE") {
+            alert("Please open Spotify and start playback on your device, then try again.");
+        } else {
+            alert("Restore failed: " + (err.response?.data?.error || err.message));
+        }
     }
 }
 

@@ -572,60 +572,71 @@ def pause_track(request):
 @require_http_methods(["GET"])
 def restore_queue(request, queue_id: int):
     start = time.time()
-    try:
-        # Authentication check
-        user_id = request.session.get("user_id")
-        if not user_id:
-            return JsonResponse({"error": "Not authenticated"}, status=401)
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
 
-        user = get_object_or_404(User, id=user_id)
-        queue = get_object_or_404(Queue, id=queue_id, user=user)
+    user = get_object_or_404(User, id=user_id)
+    queue = get_object_or_404(Queue, id=queue_id, user=user)
 
-        # Get tracks
-        tracks = list(queue.tracks.order_by("position"))
-        if not tracks:
-            return JsonResponse({"error": "Queue is empty"}, status=400)
+    tracks = list(queue.tracks.order_by("position"))
+    if not tracks:
+        return JsonResponse({"error": "Queue is empty"}, status=400)
 
-        client = SpotifyClient(user)
+    client = SpotifyClient(user)
+    client.ensure_token()
 
-        success = 0
-        failed = []
-
-        for track in tracks:
-            uri = track.track_uri
-            response = client.post("me/player/queue", params={"uri": uri})
-            if response.status_code in {200, 204}:
-                success += 1
-            else:
-                failed.append({
-                    "track": getattr(track, "track_name", ""),
-                    "uri": uri,
-                    "error": response.text or None,
-                })
-
-        elapsed = time.time() - start
-        logger.info(f"Restore completed in {elapsed:.2f}s: {success}/{len(tracks)} tracks successful")
-
-        if success == 0:
-            return JsonResponse(
-                {"error": "Failed to queue any tracks.", "details": failed},
-                status=500,
-            )
-
+    # Step 1: Check devices
+    devices_resp = client.get("me/player/devices")
+    if devices_resp.status_code != 200:
         return JsonResponse(
-            {
-                "message": f"Restored {success} tracks to the queue.",
-                "failures": failed if failed else None,
-            },
-            status=207 if failed else 200,
+            {"error": "Failed to fetch devices", "details": devices_resp.text},
+            status=devices_resp.status_code,
         )
 
-    except Exception as e:
-        logger.error(f"Unexpected error in restore_queue: {e}", exc_info=True)
+    devices = devices_resp.json().get("devices", [])
+    active_device = next((d for d in devices if d.get("is_active")), None)
+
+    if not active_device:
+        # No active Spotify app (mobile often goes inactive in background)
         return JsonResponse(
-            {"error": "An unexpected error occurred while restoring the queue"},
+            {"error": "NO_ACTIVE_DEVICE", "message": "Please start playback in Spotify first."},
+            status=400,
+        )
+
+    # Step 2: Enqueue tracks into active device
+    success = 0
+    failed = []
+
+    for track in tracks:
+        uri = track.track_uri
+        response = client.post("me/player/queue", params={"uri": uri})
+
+        if response.status_code in {204, 200}:
+            success += 1
+        else:
+            failed.append({
+                "track": track.track_name,
+                "uri": uri,
+                "error": response.text
+            })
+
+    if success == 0:
+        return JsonResponse(
+            {"error": "Failed to queue any tracks.", "details": failed},
             status=500,
         )
+
+    elapsed = time.time() - start
+    return JsonResponse(
+        {
+            "message": f"Restored {success} tracks to the queue.",
+            "failures": failed if failed else None,
+            "elapsed_time": f"{elapsed:.2f}s"
+        },
+        status=207 if failed else 200,
+    )
+
 
 
 
