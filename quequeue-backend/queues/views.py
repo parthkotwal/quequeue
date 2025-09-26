@@ -23,6 +23,7 @@ import sklearn.cluster
 from sklearn.metrics.pairwise import cosine_similarity
 from PIL import Image
 from io import BytesIO
+import logging
 
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
@@ -49,6 +50,10 @@ FEATURE_COLUMNS = [
     'speechiness', 'acousticness', 'instrumentalness', 
     'liveness', 'valence', 'tempo', 'duration_ms', 'time_signature'
 ]
+
+logger = logging.getLogger(__name__)
+
+
 
 def health(request):
     return HttpResponse("OK", status=200)
@@ -563,109 +568,60 @@ def pause_track(request):
     else:
         return JsonResponse({"error": "Failed to pause playback"}, status=response.status_code)
 
-import logging
-logger = logging.getLogger(__name__)
 
 @require_http_methods(["GET"])
 def restore_queue(request, queue_id: int):
     start = time.time()
-    logger.info(f"Starting restore_queue for queue_id: {queue_id}")
-
     try:
         # Authentication check
         user_id = request.session.get("user_id")
         if not user_id:
-            logger.warning(f"Unauthenticated request for queue_id: {queue_id}")
             return JsonResponse({"error": "Not authenticated"}, status=401)
 
-        logger.info(f"User {user_id} requesting restore for queue {queue_id}")
-
-        # Get user and queue
         user = get_object_or_404(User, id=user_id)
         queue = get_object_or_404(Queue, id=queue_id, user=user)
-        logger.info(f"Found queue '{queue}' for user '{getattr(user, 'username', user_id)}'")
 
         # Get tracks
         tracks = list(queue.tracks.order_by("position"))
         if not tracks:
-            logger.warning(f"Queue {queue_id} is empty")
             return JsonResponse({"error": "Queue is empty"}, status=400)
 
-        track_uris = [t.track_uri for t in tracks]
-        logger.info(f"Queue has {len(track_uris)} tracks")
-
-        # Initialize Spotify client and ensure token
         client = SpotifyClient(user)
-        client.ensure_token()
 
-        def safe_json(response):
-            try:
-                return response.json()
-            except Exception:
-                return response.text or None
+        success = 0
+        failed = []
 
-        # 1. Start playback with the first track
-        first_uri = track_uris[0]
-        logger.info(f"Starting playback with first track: {first_uri}")
-        play_response = client.put("me/player/play", data={"uris": [first_uri]})
-
-        if play_response.status_code not in {200, 204}:
-            logger.error(
-                f"Failed to start playback. Status={play_response.status_code}, "
-                f"Response={safe_json(play_response)}"
-            )
-            return JsonResponse(
-                {
-                    "error": "Failed to start playback. Please start playing music on a Spotify device first.",
-                    "details": safe_json(play_response),
-                },
-                status=play_response.status_code,
-            )
-
-        logger.info("Successfully started playback with first track")
-
-        # 2. Queue the rest of the tracks
-        failures = []
-        success_count = 1
-
-        for i, uri in enumerate(track_uris[1:], start=2):
-            logger.debug(f"Queueing track {i}/{len(track_uris)}: {uri}")
-            time.sleep(0.2)
-            queue_response = client.post("me/player/queue", params={"uri": uri})
-
-            if queue_response.status_code in {200, 204}:
-                success_count += 1
-                logger.debug(f"Successfully queued track {i}")
+        for track in tracks:
+            uri = track.track_uri
+            response = client.post("me/player/queue", params={"uri": uri})
+            if response.status_code in {200, 204}:
+                success += 1
             else:
-                error_details = {
+                failed.append({
+                    "track": getattr(track, "track_name", ""),
                     "uri": uri,
-                    "status": queue_response.status_code,
-                    "error": safe_json(queue_response),
-                }
-                failures.append(error_details)
-                logger.warning(f"Failed to queue track {i}: {error_details}")
+                    "error": response.text or None,
+                })
 
-        # Log final results
-        elapsed_time = time.time() - start
-        logger.info(
-            f"Restore completed in {elapsed_time:.2f}s: "
-            f"{success_count}/{len(track_uris)} tracks successful, {len(failures)} failures"
+        elapsed = time.time() - start
+        logger.info(f"Restore completed in {elapsed:.2f}s: {success}/{len(tracks)} tracks successful")
+
+        if success == 0:
+            return JsonResponse(
+                {"error": "Failed to queue any tracks.", "details": failed},
+                status=500,
+            )
+
+        return JsonResponse(
+            {
+                "message": f"Restored {success} tracks to the queue.",
+                "failures": failed if failed else None,
+            },
+            status=207 if failed else 200,
         )
-
-        response_data = {
-            "message": f"Restored {success_count} of {len(track_uris)} tracks."
-        }
-        if failures:
-            response_data["failures"] = failures
-
-        return JsonResponse(response_data, status=207 if failures else 200)
 
     except Exception as e:
-        elapsed_time = time.time() - start
-        logger.error(
-            f"Unexpected error in restore_queue after {elapsed_time:.2f}s: {e}",
-            exc_info=True,
-        )
+        logger.error(f"Unexpected error in restore_queue: {e}", exc_info=True)
         return JsonResponse(
             {"error": "An unexpected error occurred while restoring the queue"},
             status=500,

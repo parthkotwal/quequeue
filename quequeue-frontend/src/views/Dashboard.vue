@@ -4,7 +4,7 @@
         <div class="max-w-4xl mx-auto">
             <!-- Welcome Header -->
             <h1 class="text-3xl md:text-4xl font-silkscreen mb-6">
-            Welcome, {{ session.user?.name || 'User' }}
+                Welcome, {{ session.user?.name || 'User' }}
             </h1>
     
             <!-- Action Buttons -->

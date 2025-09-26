@@ -50,8 +50,6 @@ export async function initSpotifyPlayer(initialToken) {
         playerState.ready = true;
         playerState.player = player;
 
-        // Don't auto-transfer - let user decide or do it from UI
-        // If you want auto-transfer, make it optional
         if (!playerState.isTransferring) {
           console.log("Player ready. Use transfer button to activate playback on this device.");
         }
@@ -170,35 +168,37 @@ export async function transferPlayback(play = false, waitForConfirmation = true)
 }
 
 // Helper function to ensure device is active before queue operations
-export async function ensureActiveDevice() {
+// Helper function to check device but not always force transfer
+export async function ensureActiveDevice({ forceWebPlayer = false } = {}) {
   if (!playerState.deviceId || !playerState.ready) {
     throw new Error("Player not ready. Please wait for the player to initialize.");
   }
 
   try {
-    // Check if our device is already active
     const currentStateRes = await apiClient.get('/current_playback/');
-    
-    if (currentStateRes.data && currentStateRes.data.device && 
-        currentStateRes.data.device.id === playerState.deviceId && 
-        currentStateRes.data.device.is_active) {
-      console.log("Device is already active");
-      return true;
+    const activeDevice = currentStateRes.data?.device;
+
+    if (activeDevice?.is_active) {
+      console.log("Active device:", activeDevice.name);
+      return activeDevice; // respect the current active device
     }
 
-    // Transfer playback to our device if not active
-    console.log("Transferring playback to web player...");
-    await transferPlayback(false); // Don't auto-play
+    if (forceWebPlayer) {
+      console.log("Transferring playback to web player...");
+      await transferPlayback(false);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return { id: playerState.deviceId, is_active: true };
+    }
+
+    console.log("No active device. Waiting for user to start playback manually.");
+    return null;
     
-    // Wait a moment for transfer to complete
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    return true;
   } catch (err) {
-    console.error("Failed to ensure active device:", err);
+    console.error("Failed to check active device:", err);
     throw err;
   }
 }
+
 
 // Function to restore queue with proper device activation
 export async function restoreQueueWithDeviceCheck(queueData) {

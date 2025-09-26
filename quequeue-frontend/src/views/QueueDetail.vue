@@ -192,11 +192,12 @@ const fetchQueue = async () => {
 const restoreQueue = async () => {
     restoring.value = true
     try {
-        await ensureActiveDevice();
-        const res = await apiClient.get(`/queue/${queueId}/restore/`)
-        alert(res.data.message)
+        // Don’t force the web player — just enqueue on whatever device is active
+        await ensureActiveDevice({ forceWebPlayer: false });
+        const res = await apiClient.get(`/queue/${queueId}/restore/`);
+        alert(res.data.message);
     } catch(err) {
-        alert("Restore failed: " + err.response?.data?.error || err.message)
+        alert("Restore failed: " + (err.response?.data?.error || err.message));
     } finally {
         restoring.value = false
     }

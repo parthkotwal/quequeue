@@ -70,7 +70,7 @@
     <!-- Description and metadata -->
     <div class="px-6 pb-6 flex-grow">
       <p class="text-secondaryText text-sm mb-3 line-clamp-2 leading-relaxed">
-        {{ queue.description || 'No description' }}
+        {{ queue.description || '' }}
       </p>
       
       <!-- Created date with icon -->
