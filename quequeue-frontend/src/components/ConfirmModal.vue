@@ -20,8 +20,11 @@
           </div>
         </div>
         
-        <!-- Message -->
-        <div class="mb-6 text-secondaryText" v-html="message"></div>
+        <!-- Custom Content Slot (for forms, etc.) -->
+        <slot name="custom-content"></slot>
+        
+        <!-- Message (only show if no custom content) -->
+        <div v-if="!$slots['custom-content']" class="mb-6 text-secondaryText" v-html="message"></div>
         
         <!-- Actions -->
         <div class="flex justify-end space-x-3">
