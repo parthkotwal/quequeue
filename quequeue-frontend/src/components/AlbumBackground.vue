@@ -5,14 +5,18 @@
     aria-hidden="true"
   >
     <div 
-      class="album-layer" 
       v-for="(cover, idx) in visibleCovers" 
       :key="idx"
       :style="layerStyle(cover, idx)"
-      :class="{ 'evaporating': scrollY > 100 }"
+      :class="['album-layer', { evaporating: scrollY > 100 }]"
     >
-      <img :src="cover.url" :alt="`album ${idx+1}`" class="album-img" :class="{ 'evaporating': scrollY > 100 }">
+      <img 
+        :src="cover.url" 
+        :alt="`album ${idx+1}`" 
+        :class="['album-img', { evaporating: scrollY > 100 }]"
+      >
     </div>
+
     <!-- subtle overlay to dim background -->
     <div class="absolute inset-0 bg-gradient-to-b from-transparent to-[rgba(0,0,0,0.2)]" style="z-index: 2;"></div>
   </div>
