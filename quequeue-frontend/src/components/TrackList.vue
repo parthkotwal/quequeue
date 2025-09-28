@@ -75,7 +75,7 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import apiClient from '../api'
-import { notificationStore } from '../components/NotificationStore.js'
+import { notificationStore } from '../stores/notification'
 import ConfirmModal from '../components/ConfirmModal.vue'
 
 const props = defineProps({
