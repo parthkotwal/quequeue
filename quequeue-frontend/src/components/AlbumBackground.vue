@@ -11,7 +11,7 @@
       :style="layerStyle(cover, idx)"
       :class="{ 'evaporating': scrollY > 100 }"
     >
-      <img :src="cover.url" :alt="`album ${idx+1}`" class="album-img" />
+      <img :src="cover.url" :alt="`album ${idx+1}`" class="album-img" :class="{ 'evaporating': scrollY > 100 }">
     </div>
     <!-- subtle overlay to dim background -->
     <div class="absolute inset-0 bg-gradient-to-b from-transparent to-[rgba(0,0,0,0.2)]" style="z-index: 2;"></div>
@@ -63,16 +63,20 @@ onUnmounted(() => {
 
 function layerStyle(cover, i) {
   const evaporationIntensity = Math.min(scrollY.value / 300, 1);
-  const finalOpacity = 0.25 * (1 - evaporationIntensity * 0.7);
-
+  const finalOpacity = 0.25 * (1 - evaporationIntensity * 0.9);
+  const evaporateY = evaporationIntensity * 40;
+  const evaporateScale = 1 - evaporationIntensity * 0.3;
+  const blurAmount = evaporationIntensity * 3;
+  
   return {
     left: `${cover.left}%`,
     top: `${cover.startTop}px`,
-    transform: `translate(-50%, 0) scale(${cover.scale}) rotate(${cover.rotation}deg)`,
+    transform: `translate(-50%, ${-evaporateY}px) scale(${cover.scale * evaporateScale}) rotate(${cover.rotation + evaporationIntensity * 3}deg)`,
     animationDuration: `${cover.duration}s`,
     animationDelay: `${cover.delay}s`,
     zIndex: 1,
     opacity: finalOpacity,
+    filter: `blur(${blurAmount}px)`,
     '--evaporate-amount': `${evaporationIntensity * 30}px`
   };
 }
@@ -90,9 +94,18 @@ function layerStyle(cover, i) {
   transition: opacity 0.6s ease-out, transform 0.6s ease-out;
 }
 
-.album-layer.evaporating {
-  transform: translate(-50%, var(--evaporate-amount, 0px)) scale(0.8) rotate(5deg) !important;
-  filter: blur(2px) !important;
+.album-layer {
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.album-img {
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.album-img.evaporating {
+  opacity: 0.6;
+  filter: blur(1.5px) saturate(0.8) brightness(1.2);
+  transform: scale(0.95) translateY(-5px);
 }
 
 .album-img {
