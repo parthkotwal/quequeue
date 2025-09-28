@@ -157,6 +157,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Logging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -237,6 +238,13 @@ CSRF_COOKIE_SAMESITE = "None"
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Maximum file upload size (20MB)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
+
+# Maximum request size
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 
 if DEBUG:
     SESSION_COOKIE_AGE = 3600  # 1 hour for development
