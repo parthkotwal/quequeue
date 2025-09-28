@@ -82,45 +82,20 @@
       </div>
     </div>
 
-    <!-- Delete Modal with improved styling -->
-    <div 
-      v-if="showDeleteModal" 
-      class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4"
-      @click.stop="showDeleteModal = false"
-    >
-      <div class="bg-primary border border-divider p-8 rounded-xl w-full max-w-md text-white shadow-2xl" @click.stop>
-        <div class="flex items-center mb-6">
-          <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mr-4">
-            <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <div>
-            <h3 class="text-xl font-silkscreen mb-1 text-red-400">Confirm Delete</h3>
-            <p class="text-secondaryText text-sm">This action cannot be undone</p>
-          </div>
-        </div>
-        
-        <p class="mb-6 text-secondaryText">
-          Are you sure you want to permanently delete <strong class="text-white">"{{ queue.name }}"</strong>?
-        </p>
-        
-        <div class="flex justify-end space-x-3">
-          <button 
-            @click.stop="showDeleteModal = false" 
-            class="px-6 py-2 rounded-lg border border-divider hover:bg-divider/30 transition-colors duration-200 font-medium"
-          >
-            Cancel
-          </button>
-          <button 
-            @click.stop="confirmDeleteQueue" 
-            class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-silkscreen transition-colors duration-200 shadow-lg hover:shadow-xl"
-          >
-            Delete Queue
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- Confirm Modal -->
+    <ConfirmModal
+      :is-open="showDeleteModal"
+      type="danger"
+      title="Delete Queue"
+      subtitle="This action cannot be undone"
+      :message="`Are you sure you want to permanently delete <strong class='text-white'>&quot;${queue.name}&quot;</strong>?`"
+      confirm-text="Delete Queue"
+      cancel-text="Cancel"
+      loading-text="Deleting..."
+      :loading="deleting"
+      @confirm="confirmDeleteQueue"
+      @cancel="showDeleteModal = false"
+    />
   </div>
 </template>
 
@@ -128,6 +103,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import apiClient from '../api'
+import { notificationStore } from '../stores/notification'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
 const props = defineProps({
   queue: Object
@@ -139,6 +116,7 @@ const router = useRouter()
 const menuOpen = ref(false)
 const showDeleteModal = ref(false)
 const restoring = ref(false)
+const deleting = ref(false)
 
 function toggleMenu() {
   menuOpen.value = !menuOpen.value
@@ -152,9 +130,33 @@ async function restoreQueue() {
   restoring.value = true
   try {
     const res = await apiClient.get(`/queue/${props.queue.id}/restore/`)
-    alert(res.data.message)
+    
+    notificationStore.success(
+      'Queue Restored!',
+      res.data.message || `Successfully restored "${props.queue.name}" to your Spotify queue.`
+    )
+    
+    // Show additional info if there were failures
+    if (res.data.failures && res.data.failures.length > 0) {
+      notificationStore.warning(
+        'Partial Restore',
+        `${res.data.failures.length} tracks could not be restored. Check if they're still available.`
+      )
+    }
   } catch(err) {
-    alert("Restore failed: " + (err.response?.data?.error || err.message))
+    const errorMessage = err.response?.data?.error || err.message || 'Unknown error occurred'
+    
+    if (err.response?.data?.error === 'NO_ACTIVE_DEVICE') {
+      notificationStore.warning(
+        'No Active Device',
+        'Please start playback in Spotify first, then try restoring the queue.'
+      )
+    } else {
+      notificationStore.error(
+        'Restore Failed',
+        `Failed to restore queue: ${errorMessage}`
+      )
+    }
   } finally {
     restoring.value = false
     menuOpen.value = false
@@ -167,14 +169,26 @@ function openDeleteModal() {
 }
 
 async function confirmDeleteQueue() {
+  deleting.value = true
   try {
     await apiClient.delete(`/queue/${props.queue.id}/delete/`)
-    alert("Queue deleted")
+    
+    notificationStore.success(
+      'Queue Deleted',
+      `"${props.queue.name}" has been permanently deleted.`
+    )
+    
     emit('deleted', props.queue.id)
   } catch(err) {
-    alert("Delete failed: " + (err.response?.data?.error || err.message))
+    const errorMessage = err.response?.data?.error || err.message || 'Unknown error occurred'
+    notificationStore.error(
+      'Delete Failed',
+      `Failed to delete queue: ${errorMessage}`
+    )
+  } finally {
+    deleting.value = false
+    showDeleteModal.value = false
   }
-  showDeleteModal.value = false
 }
 
 function formatDate(dateString) {
