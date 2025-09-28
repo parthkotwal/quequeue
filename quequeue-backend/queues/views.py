@@ -24,6 +24,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from PIL import Image
 from io import BytesIO
 import logging
+from tempfile import NamedTemporaryFile
 
 SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
@@ -324,6 +325,9 @@ def cancel_export(request):
 @csrf_exempt
 @require_http_methods(['POST'])
 def upload_image(request):
+    MAX_FILE_SIZE = 10 * 1024 * 1024
+    ALLOWED_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
+    
     user_id = request.session.get("user_id")
     if not user_id:
         return JsonResponse({"error": "Not logged in"}, status=401)
@@ -334,35 +338,54 @@ def upload_image(request):
     if not queue_id or not image_file:
         return JsonResponse({"error": "Missing queue_id or image"}, status=400)
 
+    # Validate file size
+    if image_file.size > MAX_FILE_SIZE:
+        return JsonResponse({"error": "Image too large (max 10MB)"}, status=400)
+
+    # Validate content type
+    content_type = image_file.content_type.lower()
+    if content_type not in ALLOWED_TYPES:
+        return JsonResponse({"error": "Invalid image format"}, status=400)
+
     filename = f"queue_covers/{uuid.uuid4()}_{image_file.name}"
-    content_type = image_file.content_type or "image/jpeg"
 
     try:
-        img = Image.open(image_file).convert("RGB")
+        # Process image in chunks to reduce memory usage
+        img = Image.open(image_file)
+        
+        # Convert only if needed
+        if img.mode != 'RGB':
+            img = img.convert("RGB")
 
+        # Calculate crop dimensions
         width, height = img.size
         min_dim = min(width, height)
         left = (width - min_dim) // 2
         top = (height - min_dim) // 2
         right = left + min_dim
         bottom = top + min_dim
-        img = img.crop((left, top, right, bottom))
 
+        # Crop and resize in one operation if possible
         target_size = (512, 512)
-        img = img.resize(target_size, Image.Resampling.LANCZOS)
-
-        buffer = BytesIO()
-        img.save(buffer, format="JPEG", quality=90)
-        buffer.seek(0)
-
-        settings.S3.upload_fileobj(
-            buffer,
-            settings.AWS_STORAGE_BUCKET_NAME,
-            filename,
-            ExtraArgs={
-                "ContentType": content_type
-            }
+        img = img.crop((left, top, right, bottom)).resize(
+            target_size, 
+            Image.Resampling.LANCZOS
         )
+
+        # Use a temporary file instead of BytesIO to reduce memory usage
+        with NamedTemporaryFile() as tmp:
+            img.save(tmp, format="JPEG", quality=85, optimize=True)
+            tmp.seek(0)
+            
+            settings.S3.upload_fileobj(
+                tmp,
+                settings.AWS_STORAGE_BUCKET_NAME,
+                filename,
+                ExtraArgs={
+                    "ContentType": "image/jpeg"
+                }
+            )
+
         image_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{filename}"
         updated = Queue.objects.filter(id=queue_id, user_id=user_id).update(image_url=image_url)
         if not updated:
@@ -371,7 +394,8 @@ def upload_image(request):
         return JsonResponse({"image_url": image_url})
     
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.error(f"Image upload failed: {str(e)}")
+        return JsonResponse({"error": "Failed to process image"}, status=500)
 
 @csrf_exempt
 @require_http_methods(['GET'])
