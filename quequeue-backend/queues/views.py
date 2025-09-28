@@ -325,37 +325,53 @@ def cancel_export(request):
 @csrf_exempt
 @require_http_methods(['POST'])
 def upload_image(request):
-    MAX_FILE_SIZE = 10 * 1024 * 1024
+    MAX_FILE_SIZE = 50 * 1024 * 1024  # Increased to 50MB
     ALLOWED_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
+    
+    logger.info(f"Upload request received. Content-Length: {request.META.get('CONTENT_LENGTH', 'Unknown')}")
+    logger.info(f"Content-Type: {request.META.get('CONTENT_TYPE', 'Unknown')}")
     
     user_id = request.session.get("user_id")
     if not user_id:
+        logger.warning("Upload attempt without authentication")
         return JsonResponse({"error": "Not logged in"}, status=401)
     
-    queue_id = request.POST.get("queue_id")
-    image_file = request.FILES.get("image")
-
-    if not queue_id or not image_file:
-        return JsonResponse({"error": "Missing queue_id or image"}, status=400)
-
-    # Validate file size
-    if image_file.size > MAX_FILE_SIZE:
-        return JsonResponse({"error": "Image too large (max 10MB)"}, status=400)
-
-    # Validate content type
-    content_type = image_file.content_type.lower()
-    if content_type not in ALLOWED_TYPES:
-        return JsonResponse({"error": "Invalid image format"}, status=400)
-
-    filename = f"queue_covers/{uuid.uuid4()}_{image_file.name}"
-
     try:
+        queue_id = request.POST.get("queue_id")
+        image_file = request.FILES.get("image")
+        
+        logger.info(f"Queue ID: {queue_id}")
+        logger.info(f"Image file: {image_file.name if image_file else 'None'}")
+        logger.info(f"Image size: {image_file.size if image_file else 'None'} bytes")
+
+        if not queue_id or not image_file:
+            logger.error("Missing queue_id or image")
+            return JsonResponse({"error": "Missing queue_id or image"}, status=400)
+
+        # Validate file size
+        if image_file.size > MAX_FILE_SIZE:
+            logger.error(f"Image too large: {image_file.size} bytes (max: {MAX_FILE_SIZE})")
+            return JsonResponse({"error": f"Image too large (max {MAX_FILE_SIZE//1024//1024}MB)"}, status=400)
+
+        # Validate content type
+        content_type = image_file.content_type.lower()
+        logger.info(f"Detected content type: {content_type}")
+        
+        if content_type not in ALLOWED_TYPES:
+            logger.error(f"Invalid content type: {content_type}")
+            return JsonResponse({"error": "Invalid image format"}, status=400)
+
+        filename = f"queue_covers/{uuid.uuid4()}_{image_file.name}"
+        logger.info(f"Processing filename: {filename}")
+
         # Process image in chunks to reduce memory usage
         img = Image.open(image_file)
+        logger.info(f"Original image size: {img.size}, mode: {img.mode}")
         
         # Convert only if needed
         if img.mode != 'RGB':
             img = img.convert("RGB")
+            logger.info("Converted image to RGB")
 
         # Calculate crop dimensions
         width, height = img.size
@@ -371,12 +387,14 @@ def upload_image(request):
             target_size, 
             Image.Resampling.LANCZOS
         )
+        logger.info(f"Processed image to size: {img.size}")
 
         # Use a temporary file instead of BytesIO to reduce memory usage
         with NamedTemporaryFile() as tmp:
             img.save(tmp, format="JPEG", quality=85, optimize=True)
             tmp.seek(0)
             
+            logger.info("Starting S3 upload...")
             settings.S3.upload_fileobj(
                 tmp,
                 settings.AWS_STORAGE_BUCKET_NAME,
@@ -385,17 +403,21 @@ def upload_image(request):
                     "ContentType": "image/jpeg"
                 }
             )
+            logger.info("S3 upload completed")
 
         image_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{filename}"
         updated = Queue.objects.filter(id=queue_id, user_id=user_id).update(image_url=image_url)
+        
         if not updated:
+            logger.error(f"Queue {queue_id} not found for user {user_id}")
             return JsonResponse({"error": "Queue not found"}, status=404)
         
+        logger.info(f"Successfully uploaded image: {image_url}")
         return JsonResponse({"image_url": image_url})
     
     except Exception as e:
-        logger.error(f"Image upload failed: {str(e)}")
-        return JsonResponse({"error": "Failed to process image"}, status=500)
+        logger.error(f"Image upload failed: {str(e)}", exc_info=True)
+        return JsonResponse({"error": f"Failed to process image: {str(e)}"}, status=500)
 
 @csrf_exempt
 @require_http_methods(['GET'])

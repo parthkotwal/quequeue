@@ -181,15 +181,59 @@ const handleFile = (event) => {
   processFile(file)
 }
 
+const compressImage = (file, maxSizeMB = 2, quality = 0.8) => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+    
+    img.onload = () => {
+      // Calculate new dimensions (max 1024x1024)
+      let { width, height } = img
+      const maxDim = 1024
+      
+      if (width > height) {
+        if (width > maxDim) {
+          height = (height * maxDim) / width
+          width = maxDim
+        }
+      } else {
+        if (height > maxDim) {
+          width = (width * maxDim) / height
+          height = maxDim
+        }
+      }
+      
+      canvas.width = width
+      canvas.height = height
+      
+      // Draw and compress
+      ctx.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(resolve, 'image/jpeg', quality)
+    }
+    
+    img.src = URL.createObjectURL(file)
+  })
+}
+
 // Core file logic
-const processFile = (file) => {
+const processFile = async (file) => {
   error.value = null
+  console.log('Original file size:', file.size, 'bytes')
+
+  // Compress if larger than 2MB
+  let processedFile = file
+  if (file.size > 2 * 1024 * 1024) {
+    console.log('Compressing image...')
+    processedFile = await compressImage(file)
+    console.log('Compressed file size:', processedFile.size, 'bytes')
+  }
 
   // Revoke old preview URL
   if (objectURLToRevoke) {
     URL.revokeObjectURL(objectURLToRevoke)
   }
-  objectURLToRevoke = URL.createObjectURL(file)
+  objectURLToRevoke = URL.createObjectURL(processedFile)
   previewURL.value = objectURLToRevoke
 
   // Debounce upload
@@ -197,7 +241,7 @@ const processFile = (file) => {
     clearTimeout(uploadTimeout)
   }
   uploadTimeout = setTimeout(() => {
-    uploadFile(file)
+    uploadFile(processedFile)
   }, 500)
 }
 
