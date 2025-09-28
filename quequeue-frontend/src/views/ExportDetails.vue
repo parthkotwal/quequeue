@@ -219,6 +219,31 @@ const uploadFile = async (file) => {
   }
 }
 
+// Add this right after the imports:
+const cleanupDummyQueues = async () => {
+  try {
+    const { data } = await apiClient.get('/my_queues/')
+    const dummyQueues = data.queues.filter(q => 
+      q.name === 'Dummy' && 
+      q.image_url?.includes('default.png')
+    )
+    
+    // Delete all dummy queues in parallel
+    await Promise.all(
+      dummyQueues.map(q => 
+        apiClient.delete(`/queue/${q.id}/delete/`).catch(err => {
+          // Silently fail individual deletions
+          console.warn(`Failed to cleanup dummy queue ${q.id}:`, err)
+        })
+      )
+    )
+  } catch (err) {
+    // Log but don't block on cleanup failures
+    console.warn('Failed to cleanup dummy queues:', err)
+  }
+}
+
+// Then modify the submitForm function:
 const submitForm = async () => {
   error.value = null
   submitting.value = true
@@ -234,7 +259,11 @@ const submitForm = async () => {
       name: name.value,
       description: description.value,
       image_url: imageURL.value
-    })        
+    })
+    
+    // Cleanup dummy queues after successful submission
+    await cleanupDummyQueues()
+        
     emit('done')
   } catch (err) {
     error.value = 'Failed to export queue.'
