@@ -249,7 +249,7 @@ import TrackList from '../components/TrackList.vue';
 import ConfirmModal from '../components/ConfirmModal.vue';
 import apiClient from '../api';
 import { ensureActiveDevice } from '../stores/player';
-import { notificationStore } from '../components/NotificationStore.js';
+import { notificationStore } from '../stores/notification';
 import NavBar from '../components/NavBar.vue';
 import MainFooter from '../components/MainFooter.vue';
 
