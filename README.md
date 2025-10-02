@@ -1,6 +1,6 @@
 # QueQueue
 
-QueQueue is a Spotify queue manager app - Vue.js frontend, Django backend, PostgreSQL database, and deployed on AWS. Lets users save and restore Spotify queues with the click of a button. 
+QueQueue is a Spotify queue manager app - Vue.js frontend, Django backend, PostgreSQL database, and deployed on AWS. Lets users save and restore Spotify queues with the click of a button. I created this tool because of how annoyed I'd be when a friends interrupted my queue or if I couldn't relive the most perfect gym session or late night drive.
 
 [https://quequeue.app](https://quequeue.app)  
 
