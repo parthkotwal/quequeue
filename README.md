@@ -8,14 +8,14 @@ It lets users save and restore Spotify queues with the click of a button.
 ## Videos
 
 ### 1. App Walkthrough
-[▶️ Watch the walkthrough](https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/frontend/QueQueue+-+1+October+2025.mp4)
+[![Watch the walkthrough](https://img.youtube.com/vi/hJ-PSDomcfE/maxresdefault.jpg)](https://youtu.be/hJ-PSDomcfE)
 
 A quick demo showing how the app looks and works from a user’s perspective.
 
 ---
 
 ### 2. Infrastructure Overview
-[▶️ Watch the infra tour](https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/frontend/Infrastructure+Overview+of+quequeue.app.mp4)
+[![Watch the walkthrough](https://img.youtube.com/vi/vKi6S3hv4t0/maxresdefault.jpg)](https://youtu.be/vKi6S3hv4t0)
 
 An overview of the architecture: CI/CD, S3, CloudFront, Elastic Beanstalk, EC2, RDS, and more.
 
