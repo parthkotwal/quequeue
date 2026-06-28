@@ -33,8 +33,17 @@
         <div v-else class="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
         <span>{{ restoring ? 'Restoring...' : 'Restore' }}</span>
       </button>
-      <button 
-        class="w-full text-left px-4 py-2 text-secondaryText hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 flex items-center space-x-2" 
+      <button
+        class="w-full text-left px-4 py-2 text-secondaryText hover:text-accent hover:bg-divider/50 transition-all duration-200 flex items-center space-x-2"
+        @click.stop="handleShare"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+        </svg>
+        <span>{{ props.queue.share_token ? 'Copy Link' : 'Share' }}</span>
+      </button>
+      <button
+        class="w-full text-left px-4 py-2 text-secondaryText hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 flex items-center space-x-2"
         @click.stop="openDeleteModal"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,6 +74,13 @@
       <h2 class="text-xl font-silkscreen mb-2 text-center leading-tight group-hover:text-accent transition-colors duration-300">
         {{ queue.name }}
       </h2>
+      <div v-if="queue.share_token" class="flex items-center justify-center gap-1 text-xs text-accent/70 mb-1">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.172 13.828a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.102 1.101" />
+        </svg>
+        <span>Shared</span>
+      </div>
     </div>
 
     <!-- Description and metadata -->
@@ -160,6 +176,31 @@ async function restoreQueue() {
   } finally {
     restoring.value = false
     menuOpen.value = false
+  }
+}
+
+async function handleShare() {
+  menuOpen.value = false
+  if (props.queue.share_token) {
+    const url = `${window.location.origin}/shared/${props.queue.share_token}`
+    try {
+      await navigator.clipboard.writeText(url)
+      notificationStore.success('Link Copied', 'Share link copied to clipboard.')
+    } catch {
+      notificationStore.error('Copy Failed', 'Could not copy link.')
+    }
+  } else {
+    try {
+      const res = await apiClient.post(`/queue/${props.queue.id}/toggle_share/`)
+      props.queue.share_token = res.data.share_token
+      if (res.data.shared) {
+        const url = `${window.location.origin}/shared/${res.data.share_token}`
+        await navigator.clipboard.writeText(url)
+        notificationStore.success('Shared!', 'Share link copied to clipboard.')
+      }
+    } catch (err) {
+      notificationStore.error('Share Failed', err.response?.data?.error || 'Could not share queue.')
+    }
   }
 }
 

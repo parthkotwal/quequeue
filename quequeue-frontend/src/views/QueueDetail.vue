@@ -16,24 +16,36 @@
                 </button>
     
                 <div class="flex flex-wrap gap-2">
-                <button 
-                    :disabled="!suggestAvailable || loadingSuggestions" 
-                    @click="openSuggestModal" 
-                    :class="suggestAvailable ? 'bg-accent hover:bg-accentLight' : 'bg-divider cursor-not-allowed'" 
+                <button
+                    :disabled="!suggestAvailable || loadingSuggestions"
+                    @click="openSuggestModal"
+                    :class="suggestAvailable ? 'bg-accent hover:bg-accentLight' : 'bg-divider cursor-not-allowed'"
                     class="px-4 py-2 rounded text-black font-silkscreen transition-colors duration-200"
                 >
                     Suggest
                 </button>
-                
-                <button 
-                    @click="showEditModal = true" 
+
+                <button
+                    @click="queue.share_token ? showShareModal = true : toggleShare()"
+                    :disabled="togglingShare"
+                    class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-silkscreen transition-colors duration-200 flex items-center gap-1"
+                >
+                    <svg v-if="togglingShare" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    <span>{{ queue.share_token ? 'Shared' : 'Share' }}</span>
+                </button>
+
+                <button
+                    @click="showEditModal = true"
                     class="bg-accent hover:bg-accentLight text-black px-4 py-2 rounded font-silkscreen transition-colors duration-200"
                 >
                     Edit
                 </button>
-                
-                <button 
-                    @click="openDeleteModal" 
+
+                <button
+                    @click="openDeleteModal"
                     class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-silkscreen transition-colors duration-200"
                 >
                     Delete
@@ -163,6 +175,45 @@
                 </div>
             </div>
     
+            <!-- Share Link Modal -->
+            <div v-if="showShareModal" class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
+                <div class="bg-primary border border-divider p-8 rounded-xl w-full max-w-md text-white shadow-2xl">
+                    <div class="text-center">
+                        <h3 class="text-xl font-silkscreen mb-3 text-accent">Share Queue</h3>
+                        <p class="text-secondaryText mb-6">Anyone with this link can view your queue and clone it to their account.</p>
+                        <div class="flex items-center gap-2 bg-divider rounded-lg p-3">
+                            <input
+                                :value="shareUrl"
+                                readonly
+                                class="flex-1 bg-transparent text-white text-sm outline-none truncate"
+                                @focus="$event.target.select()"
+                            />
+                            <button
+                                @click="copyShareLink"
+                                class="bg-accent hover:bg-accentLight text-black px-3 py-1.5 rounded font-silkscreen text-sm transition-colors duration-200 flex-shrink-0"
+                            >
+                                {{ copied ? 'Copied!' : 'Copy' }}
+                            </button>
+                        </div>
+                        <div class="flex gap-3 justify-center mt-6">
+                            <button
+                                @click="toggleShare"
+                                :disabled="togglingShare"
+                                class="px-4 py-2 rounded border border-red-600 text-red-400 hover:bg-red-600/20 font-silkscreen text-sm transition-colors duration-200"
+                            >
+                                Disable Sharing
+                            </button>
+                            <button
+                                @click="showShareModal = false"
+                                class="px-6 py-2 rounded border border-divider font-silkscreen hover:bg-divider/30 transition-colors duration-200"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Suggest Modal -->
             <div v-if="showSuggestModal" class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
                 <div class="bg-primary border border-divider p-6 rounded-xl w-full max-w-2xl text-white shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
@@ -267,6 +318,9 @@ const addingTrack = ref(null)
 const showEditModal = ref(false)
 const showDeleteModal = ref(false)
 const showRestoreSuccessModal = ref(false)
+const showShareModal = ref(false)
+const togglingShare = ref(false)
+const copied = ref(false)
 
 const suggestAvailable = ref(false);
 const showSuggestModal = ref(false);
@@ -285,6 +339,41 @@ const editForm = ref({
 const editModalMessage = computed(() => {
     return `Update the details for <strong class="text-white">"${queue.value?.name}"</strong>.`
 })
+
+const shareUrl = computed(() => {
+    if (!queue.value?.share_token) return ''
+    return `${window.location.origin}/shared/${queue.value.share_token}`
+})
+
+const toggleShare = async () => {
+    togglingShare.value = true
+    try {
+        const res = await apiClient.post(`/queue/${queueId}/toggle_share/`)
+        queue.value.share_token = res.data.share_token
+        if (res.data.shared) {
+            showShareModal.value = true
+            notificationStore.success('Sharing Enabled', 'Your queue is now shareable via link.')
+        } else {
+            showShareModal.value = false
+            notificationStore.info('Sharing Disabled', 'The share link has been deactivated.')
+        }
+    } catch (err) {
+        const msg = err.response?.data?.error || 'Failed to toggle sharing'
+        notificationStore.error('Share Error', msg)
+    } finally {
+        togglingShare.value = false
+    }
+}
+
+const copyShareLink = async () => {
+    try {
+        await navigator.clipboard.writeText(shareUrl.value)
+        copied.value = true
+        setTimeout(() => { copied.value = false }, 2000)
+    } catch {
+        notificationStore.error('Copy Failed', 'Could not copy link to clipboard.')
+    }
+}
 
 const fetchQueue = async () => {
     loading.value = true

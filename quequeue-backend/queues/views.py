@@ -89,6 +89,9 @@ def login(request):
 def callback(request):
     state = request.GET.get("state")
     expected_state = request.COOKIES.get("oauth_state")
+    logger.info(f"OAuth callback - state from URL: {state}")
+    logger.info(f"OAuth callback - state from cookie: {expected_state}")
+    logger.info(f"OAuth callback - all cookies: {list(request.COOKIES.keys())}")
     if not state or state != expected_state:
         return JsonResponse({"error": "Invalid OAuth state"}, status=403)
 
@@ -470,7 +473,8 @@ def get_queue(request, queue_id:int):
         "description": queue.description,
         "created_at": queue.created_at.isoformat(),
         "image_url": queue.image_url,
-        "tracks": track_data
+        "share_token": str(queue.share_token) if queue.share_token else None,
+        "tracks": track_data,
     })
 
 
@@ -729,7 +733,8 @@ def my_queues(request):
             "name": q.name,
             "created_at": q.created_at.isoformat(),
             "image_url": q.image_url,
-            "description": q.description
+            "description": q.description,
+            "share_token": str(q.share_token) if q.share_token else None,
         }
         for q in queues
     ]
@@ -850,9 +855,6 @@ def suggest(request, queue_id:int):
 
     return JsonResponse({"suggestions": response_payload})
 
-    # USE FUZZY MATCHING DUE TO EXPLICIT VS NOT EXPLICIT
-    # ALSO IMPROVE BY ARTIST MATCHING BY ASKING NEW CHAT
-
 @require_http_methods(['GET'])
 def suggest_available(request, queue_id:int):
     user_id = request.session.get("user_id")
@@ -871,3 +873,78 @@ def suggest_available(request, queue_id:int):
         cache_key = f'smart_sugg_u{user.id}_q{queue.id}'
         cached = cache.get(cache_key)
         return JsonResponse({"available": True if cached or len(feature_rows) >= 2 else False})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def toggle_share(request, queue_id: int):
+    user = get_object_or_404(User, id=request.session["user_id"])
+    queue = get_object_or_404(Queue, id=queue_id, user=user)
+
+    if queue.share_token:
+        queue.share_token = None
+        queue.save()
+        return JsonResponse({"shared": False, "share_token": None})
+
+    queue.share_token = uuid.uuid4()
+    queue.save()
+    return JsonResponse({"shared": True, "share_token": str(queue.share_token)})
+
+
+@require_http_methods(["GET"])
+def get_shared_queue(request, share_token):
+    queue = get_object_or_404(Queue, share_token=share_token)
+
+    track_data = [
+        {
+            "track_name": t.track_name,
+            "track_uri": t.track_uri,
+            "artist_name": t.artist_name,
+            "album_image_url": t.album_image_url,
+            "position": t.position,
+        }
+        for t in queue.tracks.order_by("position")
+    ]
+
+    return JsonResponse({
+        "id": queue.id,
+        "name": queue.name,
+        "description": queue.description,
+        "created_at": queue.created_at.isoformat(),
+        "image_url": queue.image_url,
+        "owner": queue.user.display_name,
+        "track_count": len(track_data),
+        "tracks": track_data,
+    })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def clone_shared_queue(request, share_token):
+    source = get_object_or_404(Queue, share_token=share_token)
+    user = get_object_or_404(User, id=request.session["user_id"])
+
+    new_queue = Queue.objects.create(
+        user=user,
+        name=source.name,
+        image_url=source.image_url,
+        description=source.description,
+    )
+
+    tracks = source.tracks.order_by("position")
+    for t in tracks:
+        Track.objects.create(
+            queue=new_queue,
+            track_name=t.track_name,
+            track_uri=t.track_uri,
+            artist_name=t.artist_name,
+            album_image_url=t.album_image_url,
+            position=t.position,
+        )
+
+    return JsonResponse({
+        "message": "Queue cloned successfully",
+        "queue_id": new_queue.id,
+    })

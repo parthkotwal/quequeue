@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.utils.timezone import now
 from fernet_fields import EncryptedCharField
@@ -20,6 +21,7 @@ class Queue(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     image_url = models.URLField(default="https://quequeue-user-uploads.s3.us-west-2.amazonaws.com/queue_covers/default.png")
     description = models.TextField(blank=True, null=True)
+    share_token = models.UUIDField(null=True, blank=True, unique=True)
 
     def __str__(self):
         return f"{self.name} ({self.user})"

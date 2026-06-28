@@ -41,4 +41,9 @@ urlpatterns = [
     # SMART SUGGESTION
     path('queue/<int:queue_id>/suggest/', views.suggest),
     path('queue/<int:queue_id>/suggest_available/', views.suggest_available),
+
+    # PUBLIC SHARING
+    path('queue/<int:queue_id>/toggle_share/', views.toggle_share),
+    path('shared/<uuid:share_token>/', views.get_shared_queue),
+    path('shared/<uuid:share_token>/clone/', views.clone_shared_queue),
 ]

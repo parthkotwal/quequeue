@@ -13,9 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
-if os.getenv("DJANGO_SETTINGS_ENV", "production") != "production":
-    from dotenv import load_dotenv
-    load_dotenv()
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -224,3 +223,7 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 if DEBUG:
     SESSION_COOKIE_AGE = 3600  # 1 hour for development
     SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+    SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = 'Lax'
