@@ -2,7 +2,9 @@ from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.middleware.csrf import get_token
+from django.views.decorators.cache import never_cache
 from django.utils.timezone import now, timedelta
 from .models import QueueRestoreJob, User, Queue, Track
 from .services.continuation import continuation_available, continue_queue
@@ -24,7 +26,7 @@ import urllib.parse
 import json
 import uuid
 import secrets
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import logging
 from tempfile import NamedTemporaryFile
 
@@ -42,6 +44,7 @@ REQUIRED_SCOPES = {
 }
 
 logger = logging.getLogger(__name__)
+Image.MAX_IMAGE_PIXELS = 20_000_000
 
 
 
@@ -49,6 +52,13 @@ def health(request):
     return HttpResponse("OK", status=200)
 
 
+@ensure_csrf_cookie
+@require_http_methods(["GET"])
+def csrf(request):
+    return JsonResponse({"csrfToken": get_token(request)})
+
+
+@ratelimit(key='ip', rate='10/m', block=True)
 def login(request):
     state = secrets.token_urlsafe(32)
     params = {
@@ -71,14 +81,10 @@ def login(request):
     )
     return response
 
-
-@csrf_exempt
+@ratelimit(key='ip', rate='30/m', block=True)
 def callback(request):
     state = request.GET.get("state")
     expected_state = request.COOKIES.get("oauth_state")
-    logger.info(f"OAuth callback - state from URL: {state}")
-    logger.info(f"OAuth callback - state from cookie: {expected_state}")
-    logger.info(f"OAuth callback - all cookies: {list(request.COOKIES.keys())}")
     if not state or state != expected_state:
         return JsonResponse({"error": "Invalid OAuth state"}, status=403)
 
@@ -117,7 +123,7 @@ def callback(request):
 
     granted_scopes = set(token_data.get("scope", "").split())
     if not REQUIRED_SCOPES.issubset(granted_scopes):
-        print(granted_scopes)
+        logger.warning("Spotify OAuth callback returned insufficient scopes")
 
     spotify_id = user_data.get("id")
     display_name = user_data.get("display_name", "")
@@ -171,6 +177,7 @@ def verify_auth(request):
     
 @login_required
 @require_http_methods(["GET"])
+@never_cache
 def get_token(request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -185,8 +192,9 @@ def get_token(request):
             "access_token": client.access_token,
             "expires_at": user.expiration_time.isoformat(),
         })
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+    except Exception:
+        logger.exception("Failed to issue Spotify access token")
+        return JsonResponse({"error": "Unable to refresh Spotify session"}, status=400)
 
 @login_required
 def current_user(request):
@@ -198,7 +206,6 @@ def current_user(request):
         "spotify_id": user.spotify_id,
     })
 
-@csrf_exempt
 @require_http_methods(["POST"])
 @login_required
 @ratelimit(key='user_or_ip', rate='30/m', block=True)
@@ -208,7 +215,10 @@ def transfer_player(request):
         return JsonResponse({"error": "Not authenticated"}, status=401)
 
     user = get_object_or_404(User, id=user_id)
-    data = json.loads(request.body.decode("utf-8"))
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
     device_id = data.get("device_id")
 
     if not device_id:
@@ -229,8 +239,9 @@ def transfer_player(request):
             }, status=resp.status_code)
 
         return JsonResponse({"status": "success"})
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
+    except Exception:
+        logger.exception("Failed to transfer playback")
+        return JsonResponse({"error": "Failed to transfer playback"}, status=400)
     
 @login_required
 @require_http_methods(["GET"])
@@ -255,14 +266,12 @@ def current_playback(request):
         return JsonResponse(response.json(), status=response.status_code)
 
 @login_required
-@csrf_exempt
 @require_http_methods(["POST"])
 def logout_view(request):
     """Log out the current user by clearing the session."""
     request.session.flush()
     return JsonResponse({"message": "Logged out successfully"})
 
-@csrf_exempt
 @require_http_methods(["POST"])
 @ratelimit(key='user_or_ip', rate='10/m', block=True)
 def export_queue(request):
@@ -270,7 +279,10 @@ def export_queue(request):
     if not user_id:
         return JsonResponse({"error": "Not logged in"}, status=401)
     
-    body = json.loads(request.body)
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
     queue_name = body.get("name")
     image_url = body.get("image_url")
     description = body.get("description")
@@ -291,8 +303,8 @@ def export_queue(request):
 
     return JsonResponse({"message": "Queue exported to app successfully!", "queue_id": new_queue.id})
 
-@csrf_exempt
 @require_http_methods(["POST"])
+@ratelimit(key='user_or_ip', rate='20/m', block=True)
 def cancel_export(request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -313,11 +325,10 @@ def cancel_export(request):
     queue.delete()
     return JsonResponse({"message": "Export canceled, queue deleted"})
 
-@csrf_exempt
 @require_http_methods(['POST'])
 @ratelimit(key='user_or_ip', rate='10/m', block=True)
 def upload_image(request):
-    MAX_FILE_SIZE = 50 * 1024 * 1024  # Increased to 50MB
+    MAX_FILE_SIZE = 20 * 1024 * 1024
     ALLOWED_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
     
     logger.info(f"Upload request received. Content-Length: {request.META.get('CONTENT_LENGTH', 'Unknown')}")
@@ -356,11 +367,24 @@ def upload_image(request):
             logger.error(f"Invalid content type: {content_type}")
             return JsonResponse({"error": "Invalid image format"}, status=400)
 
-        filename = f"queue_covers/{uuid.uuid4()}_{image_file.name}"
+        queue = Queue.objects.filter(id=queue_id, user_id=user_id).first()
+        if not queue:
+            logger.error(f"Queue {queue_id} not found for user {user_id}")
+            return JsonResponse({"error": "Queue not found"}, status=404)
+
+        filename = f"queue_covers/{uuid.uuid4()}.jpg"
         logger.info(f"Processing filename: {filename}")
 
-        # Process image in chunks to reduce memory usage
-        img = Image.open(image_file)
+        try:
+            with Image.open(image_file) as probe:
+                probe.verify()
+            image_file.seek(0)
+            img = Image.open(image_file)
+            img.load()
+        except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError):
+            logger.warning("Rejected invalid image upload", exc_info=True)
+            return JsonResponse({"error": "Invalid image format"}, status=400)
+
         logger.info(f"Original image size: {img.size}, mode: {img.mode}")
         
         # Convert only if needed
@@ -401,18 +425,15 @@ def upload_image(request):
             logger.info("S3 upload completed")
 
         image_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{filename}"
-        updated = Queue.objects.filter(id=queue_id, user_id=user_id).update(image_url=image_url)
-        
-        if not updated:
-            logger.error(f"Queue {queue_id} not found for user {user_id}")
-            return JsonResponse({"error": "Queue not found"}, status=404)
+        queue.image_url = image_url
+        queue.save(update_fields=["image_url"])
         
         logger.info(f"Successfully uploaded image: {image_url}")
         return JsonResponse({"image_url": image_url})
     
-    except Exception as e:
-        logger.error(f"Image upload failed: {str(e)}", exc_info=True)
-        return JsonResponse({"error": f"Failed to process image: {str(e)}"}, status=500)
+    except Exception:
+        logger.error("Image upload failed", exc_info=True)
+        return JsonResponse({"error": "Failed to process image"}, status=500)
 
 @require_http_methods(['GET'])
 def get_queue(request, queue_id:int):
@@ -426,8 +447,8 @@ def get_queue(request, queue_id:int):
     return JsonResponse(serialize_queue(queue))
 
 
-@csrf_exempt
 @require_http_methods(["PATCH"])
+@ratelimit(key='user_or_ip', rate='30/m', block=True)
 def update_queue(request, queue_id:int):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -458,8 +479,8 @@ def update_queue(request, queue_id:int):
     return JsonResponse({"message": "Queue updated successfully"})
 
 
-@csrf_exempt
 @require_http_methods(["DELETE"])
+@ratelimit(key='user_or_ip', rate='20/m', block=True)
 def delete_queue(request, queue_id):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -474,8 +495,8 @@ def delete_queue(request, queue_id):
     
     return JsonResponse({"message": "Queue deleted"})
 
-@csrf_exempt
 @require_http_methods(["POST"])
+@ratelimit(key='user_or_ip', rate='30/m', block=True)
 def add_track_to_queue(request, queue_id:int):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -515,8 +536,8 @@ def add_track_to_queue(request, queue_id:int):
         "track": serialize_track(track)
     })
 
-@csrf_exempt
 @require_http_methods(["DELETE"])
+@ratelimit(key='user_or_ip', rate='30/m', block=True)
 def remove_track_from_queue(request, queue_id:int, track_id:int):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -542,7 +563,6 @@ def remove_track_from_queue(request, queue_id:int, track_id:int):
 
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 @ratelimit(key='user_or_ip', rate='30/m', block=True)
 def play_track(request):
@@ -561,7 +581,6 @@ def play_track(request):
         return JsonResponse({"error": "Failed to start playback"}, status=response.status_code)
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 @ratelimit(key='user_or_ip', rate='30/m', block=True)
 def pause_track(request):
@@ -580,8 +599,7 @@ def pause_track(request):
         return JsonResponse({"error": "Failed to pause playback"}, status=response.status_code)
 
 
-@csrf_exempt
-@require_http_methods(["GET", "POST"])
+@require_http_methods(["POST"])
 @ratelimit(key='user_or_ip', rate='5/m', block=True)
 def restore_queue(request, queue_id: int):
     user_id = request.session.get("user_id")
@@ -674,6 +692,7 @@ def suggest(request, queue_id:int):
     return JsonResponse({"suggestions": continue_queue(user, queue, limit=limit)})
 
 @require_http_methods(['GET'])
+@ratelimit(key='user_or_ip', rate='60/m', block=True)
 def suggest_available(request, queue_id:int):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -689,9 +708,9 @@ def suggest_available(request, queue_id:int):
     )
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 @login_required
+@ratelimit(key='user_or_ip', rate='20/m', block=True)
 def toggle_share(request, queue_id: int):
     user = get_object_or_404(User, id=request.session["user_id"])
     queue = get_object_or_404(Queue, id=queue_id, user=user)
@@ -733,9 +752,9 @@ def get_shared_queue(request, share_token):
     })
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 @login_required
+@ratelimit(key='user_or_ip', rate='10/m', block=True)
 def clone_shared_queue(request, share_token):
     source = get_object_or_404(Queue, share_token=share_token)
     user = get_object_or_404(User, id=request.session["user_id"])

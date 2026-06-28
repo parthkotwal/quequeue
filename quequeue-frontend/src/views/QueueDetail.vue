@@ -134,14 +134,20 @@
                 type="danger"
                 title="Delete Queue"
                 subtitle="This action cannot be undone"
-                :message="`Are you sure you want to permanently delete <strong class='text-white'>&quot;${queue?.name}&quot;</strong>? All tracks in this queue will be lost.`"
+                message="Are you sure you want to permanently delete this queue? All tracks in this queue will be lost."
                 confirm-text="Delete Queue"
                 cancel-text="Cancel"
                 loading-text="Deleting..."
                 :loading="deleting"
                 @confirm="confirmDeleteQueue"
                 @cancel="showDeleteModal = false"
-            />
+            >
+                <template #message-content>
+                    Are you sure you want to permanently delete
+                    <strong class="text-white">&quot;{{ queue?.name }}&quot;</strong>?
+                    All tracks in this queue will be lost.
+                </template>
+            </ConfirmModal>
 
             <!-- Restore Success Modal -->
             <div v-if="showRestoreSuccessModal" class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">

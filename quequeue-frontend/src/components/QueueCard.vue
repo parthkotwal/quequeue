@@ -104,14 +104,19 @@
       type="danger"
       title="Delete Queue"
       subtitle="This action cannot be undone"
-      :message="`Are you sure you want to permanently delete <strong class='text-white'>&quot;${queue.name}&quot;</strong>?`"
+      message="Are you sure you want to permanently delete this queue?"
       confirm-text="Delete Queue"
       cancel-text="Cancel"
       loading-text="Deleting..."
       :loading="deleting"
       @confirm="confirmDeleteQueue"
       @cancel="showDeleteModal = false"
-    />
+    >
+      <template #message-content>
+        Are you sure you want to permanently delete
+        <strong class="text-white">&quot;{{ queue.name }}&quot;</strong>?
+      </template>
+    </ConfirmModal>
   </div>
 </template>
 

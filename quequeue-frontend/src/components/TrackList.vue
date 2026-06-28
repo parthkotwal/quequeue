@@ -61,14 +61,20 @@
       type="warning"
       title="Remove Track"
       subtitle="Remove from this queue"
-      :message="`Are you sure you want to remove <strong class='text-white'>&quot;${selectedTrack?.track_name}&quot;</strong> by ${selectedTrack?.artist_name} from this queue?`"
+      message="Are you sure you want to remove this track from this queue?"
       confirm-text="Remove Track"
       cancel-text="Cancel"
       loading-text="Removing..."
       :loading="removing"
       @confirm="confirmRemoveTrack"
       @cancel="cancelRemove"
-    />
+    >
+      <template #message-content>
+        Are you sure you want to remove
+        <strong class="text-white">&quot;{{ selectedTrack?.track_name }}&quot;</strong>
+        by {{ selectedTrack?.artist_name }} from this queue?
+      </template>
+    </ConfirmModal>
   </div>
 </template>
 

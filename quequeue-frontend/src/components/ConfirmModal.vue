@@ -24,7 +24,9 @@
         <slot name="custom-content"></slot>
         
         <!-- Message (only show if no custom content) -->
-        <div v-if="!$slots['custom-content']" class="mb-6 text-secondaryText" v-html="message"></div>
+        <div v-if="!$slots['custom-content']" class="mb-6 text-secondaryText">
+          <slot name="message-content">{{ message }}</slot>
+        </div>
         
         <!-- Actions -->
         <div class="flex justify-end space-x-3">
