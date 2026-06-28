@@ -233,6 +233,9 @@
                             </svg>
                         </button>
                     </div>
+                    <p class="text-secondaryText text-sm mb-4">
+                        Continuation looks at tracks from your other saved queues, prioritizing matching artists, title metadata, release era, and popularity.
+                    </p>
                     
                     <div class="flex-1 overflow-y-auto">
                         <div v-if="loadingSuggestions" class="flex items-center justify-center py-12">
@@ -247,7 +250,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.467.901-6.062 2.375L5.5 17.5V15H4a2 2 0 01-2-2V7a2 2 0 012-2h16a2 2 0 012 2v6a2 2 0 01-2 2h-1.5v2.5l-.438-.375z" />
                             </svg>
                             <p class="text-secondaryText">No continuation tracks available at the moment.</p>
-                            <p class="text-secondaryText text-sm mt-2">Save another queue with overlapping artists or metadata, then try again.</p>
+                            <p class="text-secondaryText text-sm mt-2">Save another queue first. QueQueue will use tracks from your saved queue library as candidates.</p>
                         </div>
                         
                         <div v-else class="space-y-3">
@@ -305,7 +308,6 @@ import { useRoute, useRouter } from 'vue-router';
 import TrackList from '../components/TrackList.vue';
 import ConfirmModal from '../components/ConfirmModal.vue';
 import apiClient from '../api';
-import { ensureActiveDevice } from '../stores/player';
 import { notificationStore } from '../stores/notification';
 import NavBar from '../components/NavBar.vue';
 import MainFooter from '../components/MainFooter.vue';
@@ -403,8 +405,10 @@ const fetchQueue = async () => {
 const restoreQueue = async () => {
     restoring.value = true
     try {
-        // Don't force the web player — just enqueue on whatever device is active
-        await ensureActiveDevice({ forceWebPlayer: false });
+        notificationStore.info(
+            'Restore Starting',
+            `Starting restore for "${queue.value.name}".`
+        )
         const startedJob = await startRestoreJob(queueId);
         notificationStore.info(
             'Restore Started',

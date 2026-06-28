@@ -151,6 +151,10 @@ function goToQueue() {
 async function restoreQueue() {
   restoring.value = true
   try {
+    notificationStore.info(
+      'Restore Starting',
+      `Starting restore for "${props.queue.name}".`
+    )
     const startedJob = await startRestoreJob(props.queue.id)
     notificationStore.info(
       'Restore Started',

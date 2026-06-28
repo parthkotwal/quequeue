@@ -12,12 +12,21 @@ export async function startRestoreJob(queueId) {
 }
 
 export async function waitForRestoreJob(jobId, { onUpdate } = {}) {
+  let pendingAttempts = 0
   for (let attempt = 0; attempt < 300; attempt += 1) {
     const { data } = await apiClient.get(`/restore_jobs/${jobId}/`)
     const job = data.job
     if (onUpdate) onUpdate(job)
     if (TERMINAL_STATUSES.has(job.status)) {
       return job
+    }
+    if (job.status === 'pending') {
+      pendingAttempts += 1
+      if (pendingAttempts >= 15) {
+        throw new Error('Restore job is queued, but no worker has picked it up yet.')
+      }
+    } else {
+      pendingAttempts = 0
     }
     await wait(1000)
   }

@@ -99,7 +99,8 @@ def continuation_candidates(user, queue):
     for candidate in candidates:
         score, reasons = score_candidate(candidate, profile)
         if score <= 0:
-            continue
+            score = 0.1
+            reasons = ["from another saved queue"]
         scored.append((score, candidate, reasons))
 
     scored.sort(key=lambda item: (-item[0], item[1].position, item[1].id))
