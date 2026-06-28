@@ -5,6 +5,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now, timedelta
 from .models import User, Queue, Track
+from .services.continuation import continuation_available, continue_queue
 from .services.export import export_current_spotify_queue
 from .services.export import spotify_id_from_uri
 from .services.restoration import restore_saved_queue_to_spotify
@@ -607,16 +608,14 @@ def suggest(request, queue_id:int):
         return JsonResponse({"error": "Not logged in"}, status=401)
 
     user = get_object_or_404(User, id=user_id)
-    get_object_or_404(Queue, id=queue_id, user=user)
+    queue = get_object_or_404(Queue, id=queue_id, user=user)
 
-    return JsonResponse(
-        {
-            "error": "Smart suggestions are being rebuilt.",
-            "code": "SUGGESTIONS_UNAVAILABLE",
-            "suggestions": [],
-        },
-        status=501,
-    )
+    try:
+        limit = int(request.GET.get("limit", 10))
+    except ValueError:
+        limit = 10
+    limit = min(max(limit, 1), 25)
+    return JsonResponse({"suggestions": continue_queue(user, queue, limit=limit)})
 
 @require_http_methods(['GET'])
 def suggest_available(request, queue_id:int):
@@ -625,12 +624,10 @@ def suggest_available(request, queue_id:int):
         return JsonResponse({"error": "Not logged in"}, status=401)
 
     user = get_object_or_404(User, id=user_id)
-    get_object_or_404(Queue, id=queue_id, user=user)
+    queue = get_object_or_404(Queue, id=queue_id, user=user)
 
     return JsonResponse(
         {
-            "available": False,
-            "code": "SUGGESTIONS_UNAVAILABLE",
-            "message": "Smart suggestions are being rebuilt.",
+            "available": continuation_available(user, queue),
         }
     )

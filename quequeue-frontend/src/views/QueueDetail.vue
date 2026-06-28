@@ -19,11 +19,11 @@
                 <button
                     v-if="suggestAvailable"
                     :disabled="!suggestAvailable || loadingSuggestions" 
-                    @click="openSuggestModal" 
+                    @click="openContinuationModal" 
                     :class="suggestAvailable ? 'bg-accent hover:bg-accentLight' : 'bg-divider cursor-not-allowed'" 
                     class="px-4 py-2 rounded text-black font-silkscreen transition-colors duration-200"
                 >
-                    Suggest
+                    Continue
                 </button>
                 
                 <button 
@@ -164,11 +164,11 @@
                 </div>
             </div>
     
-            <!-- Suggest Modal -->
+            <!-- Continuation Modal -->
             <div v-if="showSuggestModal" class="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-4">
                 <div class="bg-primary border border-divider p-6 rounded-xl w-full max-w-2xl text-white shadow-2xl max-h-[80vh] overflow-hidden flex flex-col">
                     <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-xl font-silkscreen text-accent">Suggested Tracks</h3>
+                        <h3 class="text-xl font-silkscreen text-accent">Continue Queue</h3>
                         <button 
                             @click="showSuggestModal = false"
                             class="text-secondaryText hover:text-white transition-colors p-1 rounded-full hover:bg-divider/50"
@@ -183,7 +183,7 @@
                         <div v-if="loadingSuggestions" class="flex items-center justify-center py-12">
                             <div class="flex items-center space-x-3">
                                 <div class="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
-                                <span class="text-secondaryText">Finding perfect matches...</span>
+                                <span class="text-secondaryText">Finding tracks that fit...</span>
                             </div>
                         </div>
                         
@@ -191,7 +191,7 @@
                             <svg class="w-12 h-12 text-secondaryText mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.467.901-6.062 2.375L5.5 17.5V15H4a2 2 0 01-2-2V7a2 2 0 012-2h16a2 2 0 012 2v6a2 2 0 01-2 2h-1.5v2.5l-.438-.375z" />
                             </svg>
-                            <p class="text-secondaryText">No suggestions available at the moment.</p>
+                            <p class="text-secondaryText">No continuation tracks available at the moment.</p>
                         </div>
                         
                         <div v-else class="space-y-3">
@@ -426,7 +426,7 @@ const checkSuggestions = async () => {
     }
 }
 
-const openSuggestModal = async () => {
+const openContinuationModal = async () => {
     showSuggestModal.value = true;
     loadingSuggestions.value = true;
     try {
@@ -435,15 +435,15 @@ const openSuggestModal = async () => {
         
         if (suggestions.value.length === 0) {
             notificationStore.info(
-                'No Suggestions',
-                'No new track suggestions found for this queue at the moment.'
+                'No Continuation Tracks',
+                'No new continuation tracks found for this queue at the moment.'
             )
         }
     } catch(err) {
-        console.error('Failed to load suggestions:', err);
-        const errorMessage = err.response?.data?.error || 'Failed to load suggestions'
+        console.error('Failed to load continuation tracks:', err);
+        const errorMessage = err.response?.data?.error || 'Failed to load continuation tracks'
         notificationStore.error(
-            'Suggestions Error',
+            'Continuation Error',
             errorMessage
         )
         suggestions.value = [];
@@ -457,8 +457,13 @@ const addSuggestedTrack = async (track) => {
     try {
         const res = await apiClient.post(`/queue/${queueId}/add_track/`, {
             track_uri: track.track_uri,
+            spotify_track_id: track.spotify_track_id,
             track_name: track.track_name,
             artist_name: track.artist_name,
+            artist_ids: track.artist_ids,
+            album_name: track.album_name,
+            release_year: track.release_year,
+            popularity: track.popularity,
             album_image_url: track.album_image_url
         });
 
