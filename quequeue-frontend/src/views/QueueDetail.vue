@@ -17,13 +17,11 @@
     
                 <div class="flex flex-wrap gap-2">
                 <button
-                    v-if="suggestAvailable"
-                    :disabled="!suggestAvailable || loadingSuggestions"
+                    :disabled="loadingSuggestions"
                     @click="openContinuationModal"
-                    :class="suggestAvailable ? 'bg-accent hover:bg-accentLight' : 'bg-divider cursor-not-allowed'"
-                    class="px-4 py-2 rounded text-black font-silkscreen transition-colors duration-200"
+                    class="bg-accent hover:bg-accentLight disabled:bg-divider disabled:cursor-not-allowed px-4 py-2 rounded text-black font-silkscreen transition-colors duration-200"
                 >
-                    Continue
+                    {{ loadingSuggestions ? 'Loading...' : 'Continue' }}
                 </button>
 
                 <button
@@ -249,6 +247,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.467.901-6.062 2.375L5.5 17.5V15H4a2 2 0 01-2-2V7a2 2 0 012-2h16a2 2 0 012 2v6a2 2 0 01-2 2h-1.5v2.5l-.438-.375z" />
                             </svg>
                             <p class="text-secondaryText">No continuation tracks available at the moment.</p>
+                            <p class="text-secondaryText text-sm mt-2">Save another queue with overlapping artists or metadata, then try again.</p>
                         </div>
                         
                         <div v-else class="space-y-3">
