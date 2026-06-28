@@ -4,17 +4,18 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now, timedelta
-from .models import User, Queue, Track
+from .models import QueueRestoreJob, User, Queue, Track
 from .services.continuation import continuation_available, continue_queue
 from .services.export import export_current_spotify_queue
 from .services.export import spotify_id_from_uri
-from .services.restoration import restore_saved_queue_to_spotify
 from .services.serialization import (
     serialize_queue,
     serialize_queue_summary,
+    serialize_restore_job,
     serialize_track,
 )
 from .spotify import SpotifyClient
+from .tasks import restore_queue_job
 from functools import wraps
 from django_ratelimit.decorators import ratelimit
 import requests
@@ -568,7 +569,8 @@ def pause_track(request):
         return JsonResponse({"error": "Failed to pause playback"}, status=response.status_code)
 
 
-@require_http_methods(["GET"])
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
 @ratelimit(key='user_or_ip', rate='5/m', block=True)
 def restore_queue(request, queue_id: int):
     user_id = request.session.get("user_id")
@@ -578,8 +580,51 @@ def restore_queue(request, queue_id: int):
     user = get_object_or_404(User, id=user_id)
     queue = get_object_or_404(Queue, id=queue_id, user=user)
 
-    result = restore_saved_queue_to_spotify(user, queue)
-    return JsonResponse(result["payload"], status=result["status"])
+    total_tracks = queue.tracks.count()
+    if total_tracks == 0:
+        return JsonResponse({"error": "Queue is empty"}, status=400)
+
+    job = QueueRestoreJob.objects.create(
+        user=user,
+        queue=queue,
+        total_tracks=total_tracks,
+    )
+    try:
+        async_result = restore_queue_job.delay(job.id)
+    except Exception:
+        job.status = QueueRestoreJob.STATUS_FAILED
+        job.error = "Failed to enqueue restore job."
+        job.completed_at = now()
+        job.save(update_fields=["status", "error", "completed_at"])
+        return JsonResponse(
+            {
+                "error": "Failed to enqueue restore job.",
+                "job": serialize_restore_job(job),
+            },
+            status=503,
+        )
+
+    job.celery_task_id = async_result.id
+    job.save(update_fields=["celery_task_id"])
+
+    return JsonResponse(
+        {
+            "message": "Queue restore started.",
+            "job_id": job.id,
+            "job": serialize_restore_job(job),
+        },
+        status=202,
+    )
+
+
+@require_http_methods(["GET"])
+def get_restore_job(request, job_id: int):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"error": "Not authenticated"}, status=401)
+
+    job = get_object_or_404(QueueRestoreJob, id=job_id, user_id=user_id)
+    return JsonResponse({"job": serialize_restore_job(job)})
 
 
 

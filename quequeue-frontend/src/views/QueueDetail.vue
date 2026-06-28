@@ -253,6 +253,7 @@ import { ensureActiveDevice } from '../stores/player';
 import { notificationStore } from '../stores/notification';
 import NavBar from '../components/NavBar.vue';
 import MainFooter from '../components/MainFooter.vue';
+import { restoreErrorMessage, startRestoreJob, waitForRestoreJob } from '../restoreJobs';
 
 const route = useRoute()
 const router = useRouter()
@@ -310,25 +311,33 @@ const restoreQueue = async () => {
     try {
         // Don't force the web player — just enqueue on whatever device is active
         await ensureActiveDevice({ forceWebPlayer: false });
-        const res = await apiClient.get(`/queue/${queueId}/restore/`);
+        const startedJob = await startRestoreJob(queueId);
+        notificationStore.info(
+            'Restore Started',
+            `Restoring "${queue.value.name}" to your Spotify queue.`
+        )
+        const job = await waitForRestoreJob(startedJob.id);
+
+        if (job.status === 'failed') {
+            throw new Error(restoreErrorMessage(job));
+        }
         
         showRestoreSuccessModal.value = true;
         
-        // Show additional info if there were failures
-        if (res.data.failures && res.data.failures.length > 0) {
+        if (job.failed_count > 0) {
             notificationStore.warning(
                 'Partial Restore',
-                `${res.data.failures.length} tracks could not be restored. Check if they're still available.`
+                `${job.failed_count} tracks could not be restored. Check if they're still available.`
             )
         }
     } catch(err) {
-        if (err.response?.data?.error === "NO_ACTIVE_DEVICE") {
+        const errorMessage = err.response?.data?.error || err.message || 'Unknown error occurred'
+        if (errorMessage.includes('Spotify first')) {
             notificationStore.warning(
                 'No Active Device',
-                'Please open Spotify and start playback on your device, then try again.'
+                errorMessage
             )
         } else {
-            const errorMessage = err.response?.data?.error || err.message || 'Unknown error occurred'
             notificationStore.error(
                 'Restore Failed',
                 `Failed to restore queue: ${errorMessage}`

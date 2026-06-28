@@ -36,3 +36,19 @@ def serialize_queue_summary(queue):
         "image_url": queue.image_url,
         "description": queue.description,
     }
+
+
+def serialize_restore_job(job):
+    return {
+        "id": job.id,
+        "queue_id": job.queue_id,
+        "status": job.status,
+        "total_tracks": job.total_tracks,
+        "succeeded_count": job.succeeded_count,
+        "failed_count": job.failed_count,
+        "failures": job.failures,
+        "error": job.error,
+        "created_at": job.created_at.isoformat(),
+        "started_at": job.started_at.isoformat() if job.started_at else None,
+        "completed_at": job.completed_at.isoformat() if job.completed_at else None,
+    }

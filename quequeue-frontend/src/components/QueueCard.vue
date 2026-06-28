@@ -105,6 +105,7 @@ import { useRouter } from 'vue-router'
 import apiClient from '../api'
 import { notificationStore } from '../stores/notification'
 import ConfirmModal from '../components/ConfirmModal.vue'
+import { restoreErrorMessage, startRestoreJob, waitForRestoreJob } from '../restoreJobs'
 
 const props = defineProps({
   queue: Object
@@ -129,27 +130,35 @@ function goToQueue() {
 async function restoreQueue() {
   restoring.value = true
   try {
-    const res = await apiClient.get(`/queue/${props.queue.id}/restore/`)
-    
+    const startedJob = await startRestoreJob(props.queue.id)
+    notificationStore.info(
+      'Restore Started',
+      `Restoring "${props.queue.name}" to your Spotify queue.`
+    )
+
+    const job = await waitForRestoreJob(startedJob.id)
+    if (job.status === 'failed') {
+      throw new Error(restoreErrorMessage(job))
+    }
+
     notificationStore.success(
       'Queue Restored!',
-      res.data.message || `Successfully restored "${props.queue.name}" to your Spotify queue.`
+      `Restored ${job.succeeded_count} tracks from "${props.queue.name}" to your Spotify queue.`
     )
     
-    // Show additional info if there were failures
-    if (res.data.failures && res.data.failures.length > 0) {
+    if (job.failed_count > 0) {
       notificationStore.warning(
         'Partial Restore',
-        `${res.data.failures.length} tracks could not be restored. Check if they're still available.`
+        `${job.failed_count} tracks could not be restored. Check if they're still available.`
       )
     }
   } catch(err) {
     const errorMessage = err.response?.data?.error || err.message || 'Unknown error occurred'
     
-    if (err.response?.data?.error === 'NO_ACTIVE_DEVICE') {
+    if (errorMessage.includes('Spotify first')) {
       notificationStore.warning(
         'No Active Device',
-        'Please start playback in Spotify first, then try restoring the queue.'
+        errorMessage
       )
     } else {
       notificationStore.error(
