@@ -35,35 +35,13 @@ else:
 
 
 ALLOWED_HOSTS = [
-    "quequeue.app",
-    "api.quequeue.app",
-    "quequeue-eb-env.us-west-2.elasticbeanstalk.com",
     "localhost",
     "127.0.0.1",
-    "awseb--AWSEB-2clchIVPrqML-1040291112.us-west-2.elb.amazonaws.com",
-    '.elasticbeanstalk.com',
-    "*"
 ]
 
-import socket
-
-# Get the container's IP to allow ALB health checks
-try:
-    # Get the container's hostname and resolve its IP
-    hostname = socket.gethostname()
-    container_ip = socket.gethostbyname(hostname)
-    ALLOWED_HOSTS.append(container_ip)
-    print(f"Added container IP to ALLOWED_HOSTS: {container_ip}")
-except Exception as e:
-    print(f"Could not resolve container IP: {e}")
-
-
-# Also allow common AWS internal IP ranges
-ALLOWED_HOSTS.extend([
-    "10.*.*.*",      # AWS VPC default range
-    "172.31.*.*",    # AWS default VPC range  
-    "172.16.*.*",    # Private IP range
-])
+_extra_hosts = os.getenv("ALLOWED_HOSTS", "")
+if _extra_hosts:
+    ALLOWED_HOSTS.extend(h.strip() for h in _extra_hosts.split(",") if h.strip())
 
 # Application definition
 INSTALLED_APPS = [
@@ -91,19 +69,11 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5173",
-    "http://frontend:5173",
-    "https://quequeue.app",
-    "https://api.quequeue.app",
-]
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:5173",
-    "http://frontend:5173",
-    "https://quequeue.app",
-    "https://api.quequeue.app",
-]
+_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "http://127.0.0.1:5173,http://frontend:5173")
+CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(",") if o.strip()]
+
+CSRF_TRUSTED_ORIGINS = list(CORS_ALLOWED_ORIGINS)
 
 ROOT_URLCONF = 'quequeue_project.urls'
 
@@ -188,6 +158,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -196,29 +167,32 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ENVIRONMENT VARIABLES
 
-import boto3
-
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
+
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_S3_REGION_NAME = "us-west-2"
-AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
-MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
-AWS_S3_FILE_OVERWRITE = False
-AWS_DEFAULT_ACL = 'public-read'
-AWS_QUERYSTRING_AUTH = False
+if AWS_ACCESS_KEY_ID and AWS_STORAGE_BUCKET_NAME:
+    import boto3
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    AWS_S3_REGION_NAME = "us-west-2"
+    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_QUERYSTRING_AUTH = False
 
-S3 = boto3.client(
-    "s3",
-    aws_access_key_id = AWS_ACCESS_KEY_ID,
-    aws_secret_access_key = AWS_SECRET_ACCESS_KEY,
-    region_name = AWS_S3_REGION_NAME
-)
+    S3 = boto3.client(
+        "s3",
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        region_name=AWS_S3_REGION_NAME,
+    )
+else:
+    S3 = None
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.db' 
 SESSION_COOKIE_NAME = 'quequeue_sessionid' 
@@ -228,10 +202,10 @@ SESSION_SAVE_EVERY_REQUEST = False
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = True 
 SESSION_COOKIE_SAMESITE = 'None'
-SESSION_COOKIE_DOMAIN = ".quequeue.app"
+SESSION_COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN", ".quequeue.app")
 
 
-CSRF_COOKIE_DOMAIN = ".quequeue.app"
+CSRF_COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN", ".quequeue.app")
 CSRF_COOKIE_SECURE = True 
 CSRF_COOKIE_SAMESITE = "None"
 

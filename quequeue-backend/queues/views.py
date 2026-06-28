@@ -9,11 +9,13 @@ from django.core.cache import cache
 from .models import User, Queue, Track
 from .spotify import SpotifyClient
 from functools import wraps
+from django_ratelimit.decorators import ratelimit
 import time
 import requests
 import urllib.parse
 import json
 import uuid
+import secrets
 import mimetypes
 import joblib
 import pandas as pd
@@ -61,12 +63,16 @@ def health(request):
 
 
 def login(request):
+    state = secrets.token_urlsafe(32)
+    request.session["oauth_state"] = state
+    request.session.save()
     params = {
         "client_id": settings.SPOTIFY_CLIENT_ID,
         "response_type": "code",
         "redirect_uri": settings.SPOTIFY_REDIRECT_URI,
         "scope": " ".join(REQUIRED_SCOPES),
-        "show_dialog": "true"
+        "show_dialog": "true",
+        "state": state,
     }
     full_auth_url = f"{SPOTIFY_AUTH_URL}?{urllib.parse.urlencode(params)}"
     return HttpResponseRedirect(full_auth_url)
@@ -74,6 +80,11 @@ def login(request):
 
 @csrf_exempt
 def callback(request):
+    state = request.GET.get("state")
+    expected_state = request.session.pop("oauth_state", None)
+    if not state or state != expected_state:
+        return JsonResponse({"error": "Invalid OAuth state"}, status=403)
+
     code = request.GET.get("code")
     if not code:
         return JsonResponse({"error": "No code provided"}, status=400)
@@ -183,6 +194,7 @@ def current_user(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 @login_required
+@ratelimit(key='user_or_ip', rate='30/m', block=True)
 def transfer_player(request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -215,6 +227,7 @@ def transfer_player(request):
     
 @login_required
 @require_http_methods(["GET"])
+@ratelimit(key='user_or_ip', rate='60/m', block=True)
 def current_playback(request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -244,6 +257,7 @@ def logout_view(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@ratelimit(key='user_or_ip', rate='10/m', block=True)
 def export_queue(request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -324,6 +338,7 @@ def cancel_export(request):
 
 @csrf_exempt
 @require_http_methods(['POST'])
+@ratelimit(key='user_or_ip', rate='10/m', block=True)
 def upload_image(request):
     MAX_FILE_SIZE = 50 * 1024 * 1024  # Increased to 50MB
     ALLOWED_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
@@ -419,7 +434,6 @@ def upload_image(request):
         logger.error(f"Image upload failed: {str(e)}", exc_info=True)
         return JsonResponse({"error": f"Failed to process image: {str(e)}"}, status=500)
 
-@csrf_exempt
 @require_http_methods(['GET'])
 def get_queue(request, queue_id:int):
     user_id = request.session.get("user_id")
@@ -581,6 +595,7 @@ def remove_track_from_queue(request, queue_id:int, track_id:int):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@ratelimit(key='user_or_ip', rate='30/m', block=True)
 def play_track(request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -599,6 +614,7 @@ def play_track(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
+@ratelimit(key='user_or_ip', rate='30/m', block=True)
 def pause_track(request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -616,6 +632,7 @@ def pause_track(request):
 
 
 @require_http_methods(["GET"])
+@ratelimit(key='user_or_ip', rate='5/m', block=True)
 def restore_queue(request, queue_id: int):
     start = time.time()
     user_id = request.session.get("user_id")
@@ -719,8 +736,8 @@ def get_feature_rows(uris):
 def uri_to_id(uri):
     return uri.split(":")[-1]
 
-@csrf_exempt
 @require_http_methods(['GET'])
+@ratelimit(key='user_or_ip', rate='10/m', block=True)
 def suggest(request, queue_id:int):
     # extract queue tracks
     # match track names to any in dataset
@@ -827,7 +844,6 @@ def suggest(request, queue_id:int):
     # USE FUZZY MATCHING DUE TO EXPLICIT VS NOT EXPLICIT
     # ALSO IMPROVE BY ARTIST MATCHING BY ASKING NEW CHAT
 
-@csrf_exempt
 @require_http_methods(['GET'])
 def suggest_available(request, queue_id:int):
     user_id = request.session.get("user_id")

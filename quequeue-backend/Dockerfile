@@ -26,11 +26,8 @@ COPY . .
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Expose port
-EXPOSE 8080
-
 # Install Gunicorn
 RUN pip install --no-cache-dir gunicorn
 
-# Run Gunicorn
-CMD ["gunicorn", "quequeue_project.wsgi:application", "--bind", "0.0.0.0:8080", "--workers", "3"]
+# Railway sets $PORT dynamically
+CMD gunicorn quequeue_project.wsgi:application --bind 0.0.0.0:${PORT:-8080} --workers 3

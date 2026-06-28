@@ -1,11 +1,12 @@
 from django.db import models
 from django.utils.timezone import now
+from fernet_fields import EncryptedCharField
 
 class User(models.Model):
     spotify_id = models.CharField(max_length=100, unique=True)
     display_name = models.CharField(max_length=100, blank=True)
-    access_token = models.CharField(max_length=500)
-    refresh_token =  models.CharField(max_length=500,blank=True, null=True)
+    access_token = EncryptedCharField(max_length=500)
+    refresh_token = EncryptedCharField(max_length=500, blank=True, null=True)
     expiration_time = models.DateTimeField(default=now)
     created_at = models.DateTimeField(auto_now_add=True)
 
