@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now, timedelta
 from .models import User, Queue, Track
 from .services.export import export_current_spotify_queue
+from .services.export import spotify_id_from_uri
 from .services.restoration import restore_saved_queue_to_spotify
 from .services.serialization import (
     serialize_queue,
@@ -485,9 +486,14 @@ def add_track_to_queue(request, queue_id:int):
     track = Track.objects.create(
         queue=queue,
         track_uri=track_uri,
+        spotify_track_id=data.get("spotify_track_id") or spotify_id_from_uri(track_uri),
         track_name=track_name,
         artist_name=artist_name,
+        artist_ids=data.get("artist_ids") or [],
+        album_name=data.get("album_name", ""),
         album_image_url=album_image_url,
+        release_year=data.get("release_year"),
+        popularity=data.get("popularity"),
         position=next_position
     )
 

@@ -3,8 +3,13 @@ def serialize_track(track):
         "id": track.id,
         "track_name": track.track_name,
         "track_uri": track.track_uri,
+        "spotify_track_id": track.spotify_track_id,
         "artist_name": track.artist_name,
+        "artist_ids": track.artist_ids,
+        "album_name": track.album_name,
         "album_image_url": track.album_image_url,
+        "release_year": track.release_year,
+        "popularity": track.popularity,
         "position": track.position,
     }
 

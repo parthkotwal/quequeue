@@ -28,8 +28,13 @@ class Track(models.Model):
     queue = models.ForeignKey(Queue, on_delete=models.CASCADE, related_name="tracks")
     track_name = models.CharField(max_length=200)
     track_uri = models.CharField(max_length=100)
+    spotify_track_id = models.CharField(max_length=100, blank=True, db_index=True)
     artist_name = models.CharField(max_length=200)
+    artist_ids = models.JSONField(default=list, blank=True)
+    album_name = models.CharField(max_length=200, blank=True)
     album_image_url = models.URLField()
+    release_year = models.PositiveSmallIntegerField(blank=True, null=True)
+    popularity = models.PositiveSmallIntegerField(blank=True, null=True)
     position = models.IntegerField()
 
     def __str__(self):
