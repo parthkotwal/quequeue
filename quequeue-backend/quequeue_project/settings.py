@@ -202,10 +202,11 @@ SESSION_SAVE_EVERY_REQUEST = False
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = True 
 SESSION_COOKIE_SAMESITE = 'None'
-SESSION_COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN", ".quequeue.app")
+_cookie_domain = os.getenv("COOKIE_DOMAIN", "").strip() or None
+SESSION_COOKIE_DOMAIN = _cookie_domain
 
 
-CSRF_COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN", ".quequeue.app")
+CSRF_COOKIE_DOMAIN = _cookie_domain
 CSRF_COOKIE_SECURE = True 
 CSRF_COOKIE_SAMESITE = "None"
 
