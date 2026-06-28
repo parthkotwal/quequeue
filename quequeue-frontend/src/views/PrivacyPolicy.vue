@@ -123,8 +123,8 @@
               <p class="text-gray-300 text-sm">Save, manage, and restore your Spotify queues</p>
             </div>
             <div class="bg-[#1a1a1a] rounded-lg p-6 border border-[#2C2C2C]">
-              <h3 class="text-[#FFD700] font-semibold mb-2">Smart Suggestions</h3>
-              <p class="text-gray-300 text-sm">Analyze saved tracks to recommend similar songs</p>
+              <h3 class="text-[#FFD700] font-semibold mb-2">Smart Continuation</h3>
+              <p class="text-gray-300 text-sm">Use saved track metadata to continue queues</p>
             </div>
             <div class="bg-[#1a1a1a] rounded-lg p-6 border border-[#2C2C2C]">
               <h3 class="text-[#FFD700] font-semibold mb-2">Authentication</h3>
@@ -165,17 +165,17 @@
         </section>
 
         <section id="ml-recommendations" class="scroll-mt-20">
-          <h2 class="text-2xl font-['Silkscreen'] text-[#FFEC99] mb-4">Smart Suggestions</h2>
+          <h2 class="text-2xl font-['Silkscreen'] text-[#FFEC99] mb-4">Smart Continuation</h2>
           <div class="bg-[#1a1a1a] rounded-lg p-6 border border-[#2C2C2C]">
             <p class="text-gray-300 mb-4">
-              Our ML-powered suggestions analyze the audio features of tracks in your saved queues to recommend 
-              similar songs you might enjoy.
+              Smart continuation is being rebuilt to use saved track and artist metadata instead of deprecated
+              Spotify audio-feature data.
             </p>
             <div class="space-y-2 text-sm text-[#B3B3B3]">
-              <p>• <strong>Data Source:</strong> External dataset (not from Spotify API)</p>
-              <p>• <strong>Processing:</strong> Done server-side when you view a queue</p>
+              <p>• <strong>Data Source:</strong> Track and artist metadata available through Spotify</p>
+              <p>• <strong>Processing:</strong> Planned server-side embedding and similarity search</p>
               <p>• <strong>No Training:</strong> We don't use your data to train models</p>
-              <p>• <strong>Cached:</strong> Suggestions cached for 24 hours to improve performance</p>
+              <p>• <strong>Status:</strong> The old suggestion engine has been retired</p>
             </div>
           </div>
         </section>
@@ -278,7 +278,7 @@ const sections = [
   { id: 'data-collected', title: 'What We Collect' },
   { id: 'data-usage', title: 'How We Use Your Data' },
   { id: 'storage-security', title: 'Storage & Security' },
-  { id: 'ml-recommendations', title: 'Smart Suggestions' },
+  { id: 'ml-recommendations', title: 'Smart Continuation' },
   { id: 'your-rights', title: 'Your Rights' },
   { id: 'third-parties', title: 'Third Parties' },
   { id: 'contact', title: 'Contact' }

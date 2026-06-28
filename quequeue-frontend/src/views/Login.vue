@@ -58,7 +58,7 @@
               <li>• Export your current Spotify queue</li>
               <li>• Save unlimited named queues</li>
               <li>• Restore queues anytime, anywhere</li>
-              <li>• Smart song suggestions powered by ML</li>
+              <li>• Smart queue continuation coming soon</li>
             </ul>
           </div>
         </div>

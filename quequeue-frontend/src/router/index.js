@@ -7,6 +7,7 @@ import ExportWizard from '../views/ExportWizard.vue'
 import Landing from '../views/Landing.vue'
 import PrivacyPolicy from '../views/PrivacyPolicy.vue'
 import Terms from '../views/Terms.vue'
+import SharedQueue from '../views/SharedQueue.vue'
 import PageNotFound from '../views/PageNotFound.vue'
 
 const routes = [
@@ -44,6 +45,10 @@ const routes = [
     {
         path: '/terms',
         component: Terms
+    },
+    {
+        path: '/shared/:token',
+        component: SharedQueue
     },
 
     // MUST BE LAST ONE
