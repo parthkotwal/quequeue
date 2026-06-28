@@ -3,7 +3,7 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django.middleware.csrf import get_token
+from django.middleware.csrf import get_token as get_csrf_token
 from django.views.decorators.cache import never_cache
 from django.utils.timezone import now, timedelta
 from .models import QueueRestoreJob, User, Queue, Track
@@ -55,7 +55,7 @@ def health(request):
 @ensure_csrf_cookie
 @require_http_methods(["GET"])
 def csrf(request):
-    return JsonResponse({"csrfToken": get_token(request)})
+    return JsonResponse({"csrfToken": get_csrf_token(request)})
 
 
 @ratelimit(key='ip', rate='10/m', block=True)
