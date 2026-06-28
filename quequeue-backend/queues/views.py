@@ -5,10 +5,16 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now, timedelta
 from .models import User, Queue, Track
+from .services.export import export_current_spotify_queue
+from .services.restoration import restore_saved_queue_to_spotify
+from .services.serialization import (
+    serialize_queue,
+    serialize_queue_summary,
+    serialize_track,
+)
 from .spotify import SpotifyClient
 from functools import wraps
 from django_ratelimit.decorators import ratelimit
-import time
 import requests
 import urllib.parse
 import json
@@ -258,43 +264,15 @@ def export_queue(request):
         return JsonResponse({"error": "Missing name or image_url"}, status=400)
 
 
-    user = User.objects.get(id=user_id)
-    client = SpotifyClient(user)
-    response = client.get("me/player/queue")
-    if response.status_code != 200:
-        return JsonResponse({"error": "Failed to fetch queue"}, status=500)
-    
-    queue_data = response.json()
-    new_queue = Queue.objects.create(
-        user=user,
+    user = get_object_or_404(User, id=user_id)
+    new_queue, spotify_response = export_current_spotify_queue(
+        user,
         name=queue_name,
         image_url=image_url,
-        description=description
+        description=description,
     )
-
-    def extract_track(track_json):
-        return {
-            "track_name": track_json.get("name"),
-            "track_uri": track_json.get("uri"),
-            "artist_name": track_json.get("artists", [{}])[0].get("name"),
-            "album_image_url": track_json.get("album", {}).get("images", [{}])[0].get("url"),
-        }
-    
-    tracks = []
-    now_playing = queue_data.get("currently_playing")
-    if now_playing:
-        tracks.append(extract_track(now_playing))
-
-    for track in queue_data.get("queue", []):
-        data = extract_track(track)
-        tracks.append(data)
-    
-    for idx, track in enumerate(tracks):
-        Track.objects.create(
-            queue = new_queue, 
-            position = idx,
-            **track
-        )
+    if spotify_response.status_code != 200:
+        return JsonResponse({"error": "Failed to fetch queue"}, status=500)
 
     return JsonResponse({"message": "Queue exported to app successfully!", "queue_id": new_queue.id})
 
@@ -429,26 +407,7 @@ def get_queue(request, queue_id:int):
     user = get_object_or_404(User, id=user_id)
     queue = get_object_or_404(Queue, user=user, id=queue_id)
 
-    track_data = [
-        {
-            "id": t.id,
-            "track_name": t.track_name,
-            "track_uri": t.track_uri,
-            "artist_name": t.artist_name,
-            "album_image_url": t.album_image_url,
-            "position": t.position
-        }
-        for t in queue.tracks.order_by("position")
-    ]
-
-    return JsonResponse({
-        "id": queue.id,
-        "name": queue.name,
-        "description": queue.description,
-        "created_at": queue.created_at.isoformat(),
-        "image_url": queue.image_url,
-        "tracks": track_data
-    })
+    return JsonResponse(serialize_queue(queue))
 
 
 @csrf_exempt
@@ -534,14 +493,7 @@ def add_track_to_queue(request, queue_id:int):
 
     return JsonResponse({
         "message": "Track added",
-        "track": {
-            "id": track.id,
-            "track_uri": track.track_uri,
-            "track_name": track.track_name,
-            "artist_name": track.artist_name,
-            "album_image_url": track.album_image_url,
-            "position": track.position
-        }
+        "track": serialize_track(track)
     })
 
 @csrf_exempt
@@ -565,15 +517,7 @@ def remove_track_from_queue(request, queue_id:int, track_id:int):
     return JsonResponse({
         "message": "Track removed successfully",
         "remaining_tracks": [
-            {
-                "id": t.id,
-                "track_name": t.track_name,
-                "track_uri": t.track_uri,
-                "artist_name": t.artist_name,
-                "album_image_url": t.album_image_url,
-                "position": t.position,
-            }
-            for t in queue.tracks.order_by("position")
+            serialize_track(t) for t in queue.tracks.order_by("position")
         ]
     })
 
@@ -620,7 +564,6 @@ def pause_track(request):
 @require_http_methods(["GET"])
 @ratelimit(key='user_or_ip', rate='5/m', block=True)
 def restore_queue(request, queue_id: int):
-    start = time.time()
     user_id = request.session.get("user_id")
     if not user_id:
         return JsonResponse({"error": "Not authenticated"}, status=401)
@@ -628,63 +571,8 @@ def restore_queue(request, queue_id: int):
     user = get_object_or_404(User, id=user_id)
     queue = get_object_or_404(Queue, id=queue_id, user=user)
 
-    tracks = list(queue.tracks.order_by("position"))
-    if not tracks:
-        return JsonResponse({"error": "Queue is empty"}, status=400)
-
-    client = SpotifyClient(user)
-    client.ensure_token()
-
-    # Step 1: Check devices
-    devices_resp = client.get("me/player/devices")
-    if devices_resp.status_code != 200:
-        return JsonResponse(
-            {"error": "Failed to fetch devices", "details": devices_resp.text},
-            status=devices_resp.status_code,
-        )
-
-    devices = devices_resp.json().get("devices", [])
-    active_device = next((d for d in devices if d.get("is_active")), None)
-
-    if not active_device:
-        # No active Spotify app (mobile often goes inactive in background)
-        return JsonResponse(
-            {"error": "NO_ACTIVE_DEVICE", "message": "Please start playback in Spotify first."},
-            status=400,
-        )
-
-    # Step 2: Enqueue tracks into active device
-    success = 0
-    failed = []
-
-    for track in tracks:
-        uri = track.track_uri
-        response = client.post("me/player/queue", params={"uri": uri})
-
-        if response.status_code in {204, 200}:
-            success += 1
-        else:
-            failed.append({
-                "track": track.track_name,
-                "uri": uri,
-                "error": response.text
-            })
-
-    if success == 0:
-        return JsonResponse(
-            {"error": "Failed to queue any tracks.", "details": failed},
-            status=500,
-        )
-
-    elapsed = time.time() - start
-    return JsonResponse(
-        {
-            "message": f"Restored {success} tracks to the queue.",
-            "failures": failed if failed else None,
-            "elapsed_time": f"{elapsed:.2f}s"
-        },
-        status=207 if failed else 200,
-    )
+    result = restore_saved_queue_to_spotify(user, queue)
+    return JsonResponse(result["payload"], status=result["status"])
 
 
 
@@ -700,16 +588,7 @@ def my_queues(request):
     user = get_object_or_404(User, id=user_id)
     queues = Queue.objects.filter(user=user).order_by("-created_at")
 
-    data = [
-        {
-            "id": q.id,
-            "name": q.name,
-            "created_at": q.created_at.isoformat(),
-            "image_url": q.image_url,
-            "description": q.description
-        }
-        for q in queues
-    ]
+    data = [serialize_queue_summary(queue) for queue in queues]
 
     return JsonResponse({"queues":data})
 
