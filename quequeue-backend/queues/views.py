@@ -1,11 +1,9 @@
-from django.shortcuts import render
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import now, timedelta
-from django.core.cache import cache
 from .models import User, Queue, Track
 from .spotify import SpotifyClient
 from functools import wraps
@@ -16,15 +14,7 @@ import urllib.parse
 import json
 import uuid
 import secrets
-import mimetypes
-import joblib
-import pandas as pd
-import numpy as np
-import sklearn.preprocessing
-import sklearn.cluster
-from sklearn.metrics.pairwise import cosine_similarity
 from PIL import Image
-from io import BytesIO
 import logging
 from tempfile import NamedTemporaryFile
 
@@ -40,19 +30,6 @@ REQUIRED_SCOPES = {
     "user-read-email", 
     "user-read-private"
 }
-
-ml_data = joblib.load("song_data/ml_bundle.joblib")
-DF:pd.DataFrame = ml_data['data']
-DF.set_index("uri", inplace=True)
-URIS = DF.index.values
-SCALED_FEATURE_MATRIX = ml_data['features']
-KMEANS:sklearn.cluster.KMeans = ml_data['kmeans']
-SCALER:sklearn.preprocessing.StandardScaler = ml_data['scaler']
-FEATURE_COLUMNS = [
-    'danceability', 'energy', 'key', 'loudness', 'mode', 
-    'speechiness', 'acousticness', 'instrumentalness', 
-    'liveness', 'valence', 'tempo', 'duration_ms', 'time_signature'
-]
 
 logger = logging.getLogger(__name__)
 
@@ -742,118 +719,24 @@ def my_queues(request):
     return JsonResponse({"queues":data})
 
 
-def get_feature_rows(uris):
-    existing = DF.index.intersection(uris)
-    rows = [DF.loc[uri, FEATURE_COLUMNS].values for uri in existing]
-    return rows
-
-def uri_to_id(uri):
-    return uri.split(":")[-1]
-
 @require_http_methods(['GET'])
 @ratelimit(key='user_or_ip', rate='10/m', block=True)
 def suggest(request, queue_id:int):
-    # extract queue tracks
-    # match track names to any in dataset
-    # average their features into a feature vector
-    # scale vector w/ scaler.transform(vector)
-    # assign cluster w/ kmeans.predict
-    # query songs from that cluster, exlcuding queue tracks
-    # Return top 3 tracks by cosine distance
-    
     user_id = request.session.get("user_id")
     if not user_id:
         return JsonResponse({"error": "Not logged in"}, status=401)
-    
+
     user = get_object_or_404(User, id=user_id)
-    queue = get_object_or_404(Queue, id=queue_id, user=user)
+    get_object_or_404(Queue, id=queue_id, user=user)
 
-    # Cache
-    cache_key = f'smart_sugg_u{user.id}_q{queue.id}'
-    if request.GET.get('refresh') != '1':
-        cached = cache.get(cache_key)
-        if cached:
-            return JsonResponse({'suggestions': cached})
-        
-
-    # extract queue tracks
-    uris = list(queue.tracks.order_by('position').values_list('track_uri', flat=True))
-    
-    # match tracks to dataset
-    feature_rows = get_feature_rows(uris)
-    if len(feature_rows) < 2:
-        # not enough data for reliable vector
-        return JsonResponse({
-            "error": "Not enough feature-matched tracks for smart suggestions"
-        }, status=400)
-    
-    # compute vector
-    mood_vector = np.mean(feature_rows, axis=0).reshape(1,-1)
-    scaled_vector = SCALER.transform(mood_vector)
-
-    # predict cluster
-    cluster_id = int(KMEANS.predict(scaled_vector)[0])
-    # print(f"Cluster: {cluster_id}")
-
-    # filter dataset to this cluster
-    candidate_indices = np.where(KMEANS.labels_ == cluster_id)[0]
-    candidate_uris = np.array(URIS)[candidate_indices]
-    candidate_feats = SCALED_FEATURE_MATRIX[candidate_indices]
-
-    # filter out seen uris
-    seen_uris = set(uris)
-    unseen = [(uri, feat) for uri, feat in zip(candidate_uris, candidate_feats) if uri not in seen_uris]
-    if not unseen:
-        return JsonResponse({"error": "No unseen songs in matching cluster"}, status=404)
-    
-    # calculate distance
-    unseen_uris, unseen_feats = zip(*unseen)
-    unseen_feats_scaled = SCALER.transform(unseen_feats)
-    similarities = cosine_similarity(scaled_vector, unseen_feats_scaled).flatten()
-    # rank and return top 3
-    top_3 = sorted(zip(unseen_uris, similarities), key=lambda x: -x[1])[:3]
-    selected_uris = [uri for uri, _ in top_3]
-
-    # extract metadata
-    tracks = Track.objects.filter(track_uri__in=selected_uris)
-    track_dict = {t.track_uri: t for t in tracks}
-    response_payload = []
-
-    for uri in selected_uris:
-        if uri in track_dict:
-            track = track_dict[uri]
-            response_payload.append({
-                "track_uri": uri,
-                "track_name": track.track_name,
-                "artist_name": track.artist_name,
-                "album_image_url": track.album_image_url,
-            })
-
-    # fallback in case track not in DB
-    client = SpotifyClient(user)   
-    track_ids = [uri_to_id(uri) for uri in selected_uris]
-    response = client.get(f"tracks?ids={','.join(track_ids)}")
-    if response.status_code != 200:
-        return JsonResponse({"error": "Failed to fetch track metadata from Spotify"}, status=500)
-
-    items = response.json().get("tracks", [])
-    metadata = {item["id"]:item for item in items}
-    for uri in selected_uris:
-        if uri not in track_dict:
-            sid = uri_to_id(uri)
-            item = metadata.get(sid)
-            if item:
-                response_payload.append({
-                    "track_uri": uri,
-                    "track_name": item.get("name"),
-                    "artist_name": item.get("artists", [{}])[0].get("name"),
-                    "album_image_url": item.get("album", {}).get("images", [{}])[0].get("url"),
-                })
-    
-    if response_payload:
-        cache.set(cache_key, response_payload, timeout=60*60*24)
-
-    return JsonResponse({"suggestions": response_payload})
+    return JsonResponse(
+        {
+            "error": "Smart suggestions are being rebuilt.",
+            "code": "SUGGESTIONS_UNAVAILABLE",
+            "suggestions": [],
+        },
+        status=501,
+    )
 
 @require_http_methods(['GET'])
 def suggest_available(request, queue_id:int):
@@ -862,17 +745,15 @@ def suggest_available(request, queue_id:int):
         return JsonResponse({"error": "Not logged in"}, status=401)
 
     user = get_object_or_404(User, id=user_id)
-    queue = get_object_or_404(Queue, id=queue_id, user=user)
+    get_object_or_404(Queue, id=queue_id, user=user)
 
-    uris = list(queue.tracks.order_by('position').values_list('track_uri', flat=True))
-    feature_rows = get_feature_rows(uris)
-    
-    if len(feature_rows) < 2:
-        return JsonResponse({"available": False})
-    else:
-        cache_key = f'smart_sugg_u{user.id}_q{queue.id}'
-        cached = cache.get(cache_key)
-        return JsonResponse({"available": True if cached or len(feature_rows) >= 2 else False})
+    return JsonResponse(
+        {
+            "available": False,
+            "code": "SUGGESTIONS_UNAVAILABLE",
+            "message": "Smart suggestions are being rebuilt.",
+        }
+    )
 
 
 @csrf_exempt

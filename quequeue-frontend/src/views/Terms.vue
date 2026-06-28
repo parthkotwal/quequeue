@@ -53,7 +53,7 @@
             <li>Exporting current Spotify queue</li>
             <li>Saving multiple named queues</li>
             <li>Restoring queues to Spotify</li>
-            <li>ML-powered song suggestions</li>
+            <li>Smart queue continuation when available</li>
           </ul>
         </section>
 

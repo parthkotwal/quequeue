@@ -25,11 +25,6 @@ quequeue/
 │   │   ├── tests.py
 │   │   ├── urls.py
 │   │   └── views.py
-│   │
-│   └── song_data/              # ML / data science experiments
-│       ├── notebooks/          # Jupyter notebooks
-│       └── datasets/           # raw/processed datasets
-│
 ├── quequeue-frontend/          # Vue.js frontend
 │   ├── node_modules/           # dependencies
 │   ├── public/                 # static public assets

@@ -7,13 +7,13 @@
           <div class="queue-name">Friday Night Vibes</div>
           <div class="analysis-status">
             <div class="analyzing-dot"></div>
-            <span>Analyzing audio features...</span>
+            <span>Reading track metadata...</span>
           </div>
         </div>
 
-        <!-- Audio feature visualization -->
-        <div class="audio-features" :class="{ 'is-visible': isVisible }">
-          <div class="feature-title">Audio DNA</div>
+        <!-- Metadata signal visualization -->
+        <div class="metadata-signals" :class="{ 'is-visible': isVisible }">
+          <div class="feature-title">Queue Signals</div>
           <div class="feature-bars">
             <div 
               v-for="(feature, index) in audioFeatures" 
@@ -93,9 +93,9 @@
         <div class="processing-text">
           <div class="ai-label">QueQueue Engine</div>
           <div class="processing-steps">
-            <div class="step" :class="{ active: currentStep >= 1 }">Analyzing tempo patterns</div>
-            <div class="step" :class="{ active: currentStep >= 2 }">Finding energy matches</div>
-            <div class="step" :class="{ active: currentStep >= 3 }">Generating recommendations</div>
+            <div class="step" :class="{ active: currentStep >= 1 }">Embedding track metadata</div>
+            <div class="step" :class="{ active: currentStep >= 2 }">Finding artist matches</div>
+            <div class="step" :class="{ active: currentStep >= 3 }">Continuing the queue</div>
           </div>
         </div>
       </div>
@@ -162,13 +162,13 @@ import { ref, onMounted } from 'vue'
 const isVisible = ref(false)
 const currentStep = ref(0)
 
-// Mock data for audio features
+// Mock data for metadata signals
 const audioFeatures = [
-  { name: 'Energy', value: 78, color: 'linear-gradient(90deg, #ff6b6b, #ee5a52)' },
-  { name: 'Dance', value: 85, color: 'linear-gradient(90deg, #4ecdc4, #44a08d)' },
-  { name: 'Valence', value: 72, color: 'linear-gradient(90deg, #45b7d1, #96c93d)' },
-  { name: 'Acoustic', value: 23, color: 'linear-gradient(90deg, #f093fb, #f5576c)' },
-  { name: 'Tempo', value: 91, color: 'linear-gradient(90deg, #ffd89b, #19547b)' }
+  { name: 'Genre', value: 78, color: 'linear-gradient(90deg, #ff6b6b, #ee5a52)' },
+  { name: 'Artists', value: 85, color: 'linear-gradient(90deg, #4ecdc4, #44a08d)' },
+  { name: 'Era', value: 72, color: 'linear-gradient(90deg, #45b7d1, #96c93d)' },
+  { name: 'Popularity', value: 63, color: 'linear-gradient(90deg, #f093fb, #f5576c)' },
+  { name: 'Titles', value: 91, color: 'linear-gradient(90deg, #ffd89b, #19547b)' }
 ]
 
 // Mock data for preview tracks
@@ -292,14 +292,14 @@ defineExpose({
   50% { opacity: 0.5; transform: scale(1.3); }
 }
 
-.audio-features {
+.metadata-signals {
   margin-bottom: 2rem;
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.6s ease 0.3s;
 }
 
-.audio-features.is-visible {
+.metadata-signals.is-visible {
   opacity: 1;
   transform: translateY(0);
 }

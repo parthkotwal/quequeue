@@ -40,22 +40,22 @@
       </div>
     </section>
 
-    <!-- ML Preview Section -->
+    <!-- Smart continuation preview section -->
     <section ref="mlSection" class="relative py-20 bg-gradient-to-b from-primary to-primary/90">
       <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,215,0,0.03),transparent_50%)]"></div>
       
       <div class="relative z-10 max-w-6xl mx-auto px-6">
-        <!-- ML Section Header -->
+        <!-- Smart continuation section header -->
         <div class="text-center mb-16">
           <h2 class="text-4xl lg:text-5xl font-silkscreen text-accent mb-4">
             Need 3 tracks to close the vibe?
           </h2>
           <p class="text-xl text-secondaryText font-inconsolata">
-            Our ML algorithm analyzes your queue's audio features and embeddings, and suggests perfect additions <span class="text-accent">instantly.</span>
+            Smart queue continuation is being rebuilt around track and artist metadata, so your saved queues can grow without relying on retired Spotify recommendation inputs.
           </p>
         </div>
 
-        <!-- ML Preview Content -->
+        <!-- Smart continuation preview content -->
         <MLPreview ref="mlPreviewRef" />
       </div>
     </section>
