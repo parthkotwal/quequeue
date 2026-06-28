@@ -16,7 +16,8 @@
                 </button>
     
                 <div class="flex flex-wrap gap-2">
-                <button 
+                <button
+                    v-if="suggestAvailable"
                     :disabled="!suggestAvailable || loadingSuggestions" 
                     @click="openSuggestModal" 
                     :class="suggestAvailable ? 'bg-accent hover:bg-accentLight' : 'bg-divider cursor-not-allowed'" 

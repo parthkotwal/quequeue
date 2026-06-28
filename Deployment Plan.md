@@ -6,24 +6,23 @@
 
   * Built with **Vue.js**
   * Fully functional UI for exporting/importing queues, authentication, and queue management
-  * Containerized with Docker
+  * Deployed to **Vercel** with SPA rewrites
 
 * **Backend**
 
   * Built with **Django (Python)**
   * Handles Spotify API integration, authentication (OAuth), and queue persistence
-  * Running on a local **PostgreSQL** database (also containerized)
-  * Containerized backend service
+  * Deployed to **Railway** as a Dockerized backend service
 
-* **Database (Dev)**
+* **Database**
 
-  * Local PostgreSQL instance in Docker
+  * Railway PostgreSQL
   * Stores user accounts and queue metadata
 
 * **Other**
 
-  * ML module stubbed in (recommendations via audio features; embeddings in progress)
-  * No production deployment yet — running locally via Docker Compose
+  * Deprecated audio-feature recommendation module removed
+  * Smart queue continuation planned around track and artist metadata embeddings
 
 ---
 
