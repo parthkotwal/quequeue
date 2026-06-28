@@ -64,8 +64,6 @@ def health(request):
 
 def login(request):
     state = secrets.token_urlsafe(32)
-    request.session["oauth_state"] = state
-    request.session.save()
     params = {
         "client_id": settings.SPOTIFY_CLIENT_ID,
         "response_type": "code",
@@ -75,13 +73,22 @@ def login(request):
         "state": state,
     }
     full_auth_url = f"{SPOTIFY_AUTH_URL}?{urllib.parse.urlencode(params)}"
-    return HttpResponseRedirect(full_auth_url)
+    response = HttpResponseRedirect(full_auth_url)
+    response.set_cookie(
+        "oauth_state",
+        state,
+        max_age=600,
+        httponly=True,
+        secure=True,
+        samesite="Lax",
+    )
+    return response
 
 
 @csrf_exempt
 def callback(request):
     state = request.GET.get("state")
-    expected_state = request.session.pop("oauth_state", None)
+    expected_state = request.COOKIES.get("oauth_state")
     if not state or state != expected_state:
         return JsonResponse({"error": "Invalid OAuth state"}, status=403)
 
@@ -132,7 +139,9 @@ def callback(request):
     request.session["user_display_name"] = display_name
     request.session.save()
 
-    return HttpResponseRedirect(f"{settings.FRONTEND_URL.rstrip('/')}/auth-callback?status=ok")
+    response = HttpResponseRedirect(f"{settings.FRONTEND_URL.rstrip('/')}/auth-callback?status=ok")
+    response.delete_cookie("oauth_state")
+    return response
 
 
 def login_required(view_func):
