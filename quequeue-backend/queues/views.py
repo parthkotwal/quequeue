@@ -14,6 +14,7 @@ from .services.serialization import (
     serialize_restore_job,
     serialize_track,
 )
+from .services.storage import delete_queue_cover, s3_configured
 from .spotify import SpotifyClient
 from .tasks import restore_queue_job
 from functools import wraps
@@ -90,7 +91,11 @@ def callback(request):
         "client_secret": settings.SPOTIFY_CLIENT_SECRET,
     }
 
-    response = requests.post(SPOTIFY_TOKEN_URL, data=data)
+    response = requests.post(
+        SPOTIFY_TOKEN_URL,
+        data=data,
+        timeout=settings.SPOTIFY_REQUEST_TIMEOUT,
+    )
     if response.status_code != 200:
         return JsonResponse({"error": "Token exchange failed"}, status=400)
     
@@ -100,7 +105,11 @@ def callback(request):
     expires_in = token_data.get("expires_in")
 
     headers = {"Authorization": f"Bearer {access_token}"}
-    user_resp = requests.get(SPOTIFY_ME_URL, headers=headers)
+    user_resp = requests.get(
+        SPOTIFY_ME_URL,
+        headers=headers,
+        timeout=settings.SPOTIFY_REQUEST_TIMEOUT,
+    )
     user_data = user_resp.json()
 
     granted_scopes = set(token_data.get("scope", "").split())
@@ -296,9 +305,7 @@ def cancel_export(request):
     if not queue:
         return JsonResponse({"error": "Queue not found"}, status=404)
 
-    if queue.image_url:
-        key = queue.image_url.split(".amazonaws.com/")[1]
-        settings.S3.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=key)
+    delete_queue_cover(queue.image_url)
 
     queue.delete()
     return JsonResponse({"message": "Export canceled, queue deleted"})
@@ -317,6 +324,9 @@ def upload_image(request):
     if not user_id:
         logger.warning("Upload attempt without authentication")
         return JsonResponse({"error": "Not logged in"}, status=401)
+
+    if not s3_configured():
+        return JsonResponse({"error": "Image storage is not configured"}, status=503)
     
     try:
         queue_id = request.POST.get("queue_id")
@@ -455,9 +465,7 @@ def delete_queue(request, queue_id):
     user = get_object_or_404(User, id=user_id)
     queue = get_object_or_404(Queue, id=queue_id, user=user)
 
-    if queue.image_url:
-        key = queue.image_url.split(".amazonaws.com/")[1]
-        settings.S3.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=key)
+    delete_queue_cover(queue.image_url)
 
     queue.delete()
     

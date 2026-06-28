@@ -22,7 +22,11 @@ class SpotifyClient:
             "client_id": settings.SPOTIFY_CLIENT_ID,
             "client_secret": settings.SPOTIFY_CLIENT_SECRET,
         }
-        response = requests.post(SPOTIFY_TOKEN_URL, data=data)
+        response = requests.post(
+            SPOTIFY_TOKEN_URL,
+            data=data,
+            timeout=settings.SPOTIFY_REQUEST_TIMEOUT,
+        )
         if response.status_code != 200:
             raise Exception(f"Failed to refresh token: {response.json()}")
 
@@ -48,26 +52,60 @@ class SpotifyClient:
     def get(self, endpoint, params=None):
         self.ensure_token()
         url = f"https://api.spotify.com/v1/{endpoint}"
-        response = requests.get(url, headers=self._headers(), params=params)
+        response = requests.get(
+            url,
+            headers=self._headers(),
+            params=params,
+            timeout=settings.SPOTIFY_REQUEST_TIMEOUT,
+        )
         if response.status_code == 401:  # expired mid-request
             self.refresh_token()
-            response = requests.get(url, headers=self._headers(), params=params)
+            response = requests.get(
+                url,
+                headers=self._headers(),
+                params=params,
+                timeout=settings.SPOTIFY_REQUEST_TIMEOUT,
+            )
         return response
 
     def post(self, endpoint, data=None, params=None):
         self.ensure_token()
         url = f"https://api.spotify.com/v1/{endpoint}"
-        response = requests.post(url, headers=self._headers(), json=data, params=params)
+        response = requests.post(
+            url,
+            headers=self._headers(),
+            json=data,
+            params=params,
+            timeout=settings.SPOTIFY_REQUEST_TIMEOUT,
+        )
         if response.status_code == 401:
             self.refresh_token()
-            response = requests.post(url, headers=self._headers(), json=data, params=params)
+            response = requests.post(
+                url,
+                headers=self._headers(),
+                json=data,
+                params=params,
+                timeout=settings.SPOTIFY_REQUEST_TIMEOUT,
+            )
         return response
 
     def put(self, endpoint, data=None, params=None):
         self.ensure_token()
         url = f"https://api.spotify.com/v1/{endpoint}"
-        response = requests.put(url, headers=self._headers(), json=data, params=params)
+        response = requests.put(
+            url,
+            headers=self._headers(),
+            json=data,
+            params=params,
+            timeout=settings.SPOTIFY_REQUEST_TIMEOUT,
+        )
         if response.status_code == 401:
             self.refresh_token()
-            response = requests.put(url, headers=self._headers(), json=data, params=params)
+            response = requests.put(
+                url,
+                headers=self._headers(),
+                json=data,
+                params=params,
+                timeout=settings.SPOTIFY_REQUEST_TIMEOUT,
+            )
         return response
