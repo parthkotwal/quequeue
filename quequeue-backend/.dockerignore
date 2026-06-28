@@ -7,6 +7,7 @@ __pycache__/
 ./quequeue-frontend/node_modules
 *.log
 song_data/*.csv
+song_data/*.joblib
 song_data/*.pkl
 song_data/*.png
 song_data/notebooks/

@@ -33,6 +33,7 @@ urlpatterns = [
 
     # RESTORE QUEUE
     path('queue/<int:queue_id>/restore/', views.restore_queue),
+    path('restore_jobs/<int:job_id>/', views.get_restore_job),
 
     # ALL QUEUES
     path('my_queues/', views.my_queues),
